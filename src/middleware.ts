@@ -9,5 +9,5 @@ export default withAuth({
 });
 
 export const config = {
-  matcher: ["/app/:path*", "/api/scripts/:path*"],
+  matcher: ["/app/:path*", "/api/scripts/:path*", "/api/ideas/:path*"],
 };

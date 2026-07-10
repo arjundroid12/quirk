@@ -200,9 +200,12 @@ Output ONLY the rewritten ${args.section} text. No quotes, no headers, no markdo
 /**
  * Generate content ideas for a creator's niche.
  */
+export type IdeaTone = "educational" | "entertaining" | "inspirational" | "controversial";
+
 export async function generateIdeas(args: {
   niche: string;
   platform: ScriptGenInput["platform"];
+  tone?: IdeaTone;
   count?: number;
 }): Promise<
   Array<{
@@ -215,19 +218,34 @@ export async function generateIdeas(args: {
   const zai = await getZAI();
   const count = args.count ?? 8;
 
-  const systemPrompt = `You are CreateOS Idea Engine — you generate scroll-stopping content ideas for creators. You think like a strategist who has worked with top UGC creators and YouTubers. You always output STRICT JSON.`;
+  const toneSpec: Record<IdeaTone, string> = {
+    educational: "value-first, teaches the viewer something specific in 30 seconds or less",
+    entertaining: "humor-driven, surprising, shareable — designed to be sent to a friend",
+    inspirational: "aspirational, motivational, makes the viewer feel they can do it too",
+    controversial: "takes a strong stance, challenges common wisdom, invites debate in comments",
+  };
+
+  const toneLine = args.tone
+    ? `Tone: ${args.tone} — ${toneSpec[args.tone]}.`
+    : "Vary the tone across ideas (mix educational, entertaining, inspirational, and controversial).";
+
+  const systemPrompt = `You are CreateOS Idea Engine — you generate scroll-stopping content ideas for creators. You think like a strategist who has worked with top UGC creators, YouTubers, and TikTok creators with millions of followers. You understand trend cycles, platform-native formats, and what makes a hook stop the scroll. You always output STRICT JSON.`;
 
   const userPrompt = `Generate ${count} content ideas for a creator in the "${args.niche}" niche, optimized for ${args.platform}.
 
-Return JSON: an array of ${count} objects, each:
+${toneLine}
+
+Each idea should be DIFFERENT in format and angle — no two ideas should feel like variations of the same concept. Mix formats: POV, listicle, tutorial, story time, myth bust, comparison, behind the scenes, reaction, hot take, day in the life, before/after, etc.
+
+Return JSON: an array of EXACTLY ${count} objects, each:
 {
-  "title": "string — 6-12 words, scroll-stopping idea title",
+  "title": "string — 6-12 words, scroll-stopping idea title (no clickbait, just genuinely interesting)",
   "angle": "string — 1 sentence explaining why this idea works for this audience right now",
-  "hookPreview": "string — the opening 1-2 seconds, in the creator's voice, max 20 words",
-  "format": "string — content format: e.g. 'POV', 'listicle', 'tutorial', 'story time', 'myth bust', 'comparison', 'behind the scenes', 'reaction'"
+  "hookPreview": "string — the opening 1-2 seconds, in the creator's first-person voice, max 20 words, must stop the scroll",
+  "format": "string — content format from this list: 'POV' | 'listicle' | 'tutorial' | 'story time' | 'myth bust' | 'comparison' | 'behind the scenes' | 'reaction' | 'hot take' | 'day in the life' | 'before/after'"
 }
 
-Output ONLY the JSON array. No markdown fences.`;
+Output ONLY the JSON array. No markdown fences, no prose.`;
 
   const completion = await zai.chat.completions.create({
     messages: [
@@ -235,7 +253,7 @@ Output ONLY the JSON array. No markdown fences.`;
       { role: "user", content: userPrompt },
     ],
     temperature: 0.95,
-    max_tokens: 1500,
+    max_tokens: 1800,
   });
 
   const raw = (completion.choices?.[0]?.message?.content ?? "")
@@ -243,13 +261,24 @@ Output ONLY the JSON array. No markdown fences.`;
     .replace(/\s*```$/i, "")
     .trim();
 
+  let parsed: any[];
   try {
-    const parsed = JSON.parse(raw);
+    parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) throw new Error("not array");
-    return parsed.slice(0, count);
   } catch {
     const match = raw.match(/\[[\s\S]*\]/);
-    if (match) return JSON.parse(match[0]);
-    throw new Error("Z.AI returned non-JSON ideas");
+    if (match) {
+      parsed = JSON.parse(match[0]);
+    } else {
+      throw new Error("Z.AI returned non-JSON ideas. Raw: " + raw.slice(0, 200));
+    }
   }
+
+  // Sanitize + cap
+  return parsed.slice(0, count).map((p) => ({
+    title: String(p.title ?? "").slice(0, 200),
+    angle: String(p.angle ?? "").slice(0, 400),
+    hookPreview: String(p.hookPreview ?? "").slice(0, 300),
+    format: String(p.format ?? "tutorial").slice(0, 40),
+  }));
 }

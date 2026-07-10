@@ -11,7 +11,7 @@ export default async function AppDashboard() {
   const user = session?.user as any;
   const userId = user?.id;
 
-  const [scripts, waitlistCount] = await Promise.all([
+  const [scripts, waitlistCount, ideasCount] = await Promise.all([
     userId
       ? db.script.findMany({
           where: { authorId: userId },
@@ -20,7 +20,12 @@ export default async function AppDashboard() {
         })
       : [],
     db.waitlist.count(),
+    userId ? db.idea.count({ where: { authorId: userId } }) : 0,
   ]);
+
+  const publishedCount = userId
+    ? await db.idea.count({ where: { authorId: userId, status: "published" } })
+    : 0;
 
   return (
     <div className="px-6 lg:px-10 py-8 max-w-7xl mx-auto">
@@ -67,20 +72,24 @@ export default async function AppDashboard() {
           </span>
         </Link>
 
-        <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 opacity-70">
+        <Link
+          href="/app/ideas"
+          className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand/5"
+        >
           <div className="flex items-center justify-between">
             <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-fuchsia-500 to-rose-500 flex items-center justify-center text-white">
               <Lightbulb className="h-5 w-5" />
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-brand-pink bg-brand-pink/10 px-2 py-0.5 rounded-full">
-              Soon
-            </span>
+            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </div>
           <h3 className="mt-4 font-display font-bold">Idea Engine</h3>
           <p className="mt-1 text-sm text-muted-foreground">
-            Daily content ideas tuned to your niche and platform.
+            Generate 8 scroll-stopping ideas tuned to your niche.
           </p>
-        </div>
+          <span className="mt-3 inline-block text-xs font-mono uppercase tracking-widest text-brand">
+            {ideasCount > 0 ? `${ideasCount} in bank →` : "Live now →"}
+          </span>
+        </Link>
 
         <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 opacity-70">
           <div className="flex items-center justify-between">
@@ -137,14 +146,24 @@ export default async function AppDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="mt-12 grid gap-4 sm:grid-cols-3">
+      <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Your scripts</span>
+            <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Scripts</span>
             <PenLine className="h-4 w-4 text-brand" />
           </div>
           <div className="mt-2 font-display text-3xl font-bold">{scripts.length}</div>
           <p className="mt-1 text-xs text-muted-foreground">created so far</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Ideas</span>
+            <Lightbulb className="h-4 w-4 text-brand-pink" />
+          </div>
+          <div className="mt-2 font-display text-3xl font-bold">{ideasCount}</div>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {publishedCount > 0 ? `${publishedCount} published` : "in your bank"}
+          </p>
         </div>
         <div className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
