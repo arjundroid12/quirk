@@ -1,0 +1,23 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="createos-grad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7C3AED"/>
+      <stop offset="1" stop-color="#EC4899"/>
+    </linearGradient>
+    <linearGradient id="createos-grad-2" x1="20" y1="20" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#EC4899"/>
+      <stop offset="1" stop-color="#7C3AED"/>
+    </linearGradient>
+  </defs>
+  <!-- Rounded square background -->
+  <rect width="120" height="120" rx="28" fill="url(#createos-grad)"/>
+  <!-- "C" formed by play button + spark -->
+  <!-- The C arc -->
+  <path d="M 82 30 Q 50 30 50 60 Q 50 90 82 90" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
+  <!-- Play triangle inside the C -->
+  <path d="M 60 48 L 78 60 L 60 72 Z" fill="white"/>
+  <!-- Spark accent -->
+  <g transform="translate(86 36)">
+    <path d="M 0 -8 L 2 -2 L 8 0 L 2 2 L 0 8 L -2 2 L -8 0 L -2 -2 Z" fill="white" opacity="0.95"/>
+  </g>
+</svg>

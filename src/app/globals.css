@@ -1,0 +1,203 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter);
+  --font-display: var(--font-jakarta);
+  --font-mono: var(--font-jetbrains);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-pink: var(--brand-pink);
+  --color-brand-cream: var(--brand-cream);
+  --color-brand-dark: var(--brand-dark);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+/* CreateOS Light (cream) theme */
+:root {
+  --radius: 0.75rem;
+
+  /* Brand */
+  --brand: #7C3AED;          /* deep purple */
+  --brand-foreground: #FFFFFF;
+  --brand-pink: #EC4899;     /* electric pink */
+  --brand-cream: #FAFAF7;    /* cream */
+  --brand-dark: #0F0F1A;     /* near-black */
+
+  /* Surfaces */
+  --background: #FAFAF7;
+  --foreground: #0F0F1A;
+  --card: #FFFFFF;
+  --card-foreground: #0F0F1A;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F0F1A;
+
+  /* Brand as primary */
+  --primary: #7C3AED;
+  --primary-foreground: #FFFFFF;
+  --secondary: #F1ECFE;
+  --secondary-foreground: #4C1D95;
+  --muted: #F4F4F0;
+  --muted-foreground: #6B6B7B;
+  --accent: #FCE7F3;
+  --accent-foreground: #831843;
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --border: #E6E2DC;
+  --input: #E6E2DC;
+  --ring: #7C3AED;
+
+  --chart-1: #7C3AED;
+  --chart-2: #EC4899;
+  --chart-3: #F59E0B;
+  --chart-4: #10B981;
+  --chart-5: #0EA5E9;
+
+  --sidebar: #0F0F1A;
+  --sidebar-foreground: #FAFAF7;
+  --sidebar-primary: #7C3AED;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #1F1F2E;
+  --sidebar-accent-foreground: #FAFAF7;
+  --sidebar-border: #1F1F2E;
+  --sidebar-ring: #7C3AED;
+}
+
+/* CreateOS Dark theme */
+.dark {
+  --background: #0F0F1A;
+  --foreground: #FAFAF7;
+  --card: #18182A;
+  --card-foreground: #FAFAF7;
+  --popover: #18182A;
+  --popover-foreground: #FAFAF7;
+
+  --primary: #7C3AED;
+  --primary-foreground: #FFFFFF;
+  --secondary: #1F1F2E;
+  --secondary-foreground: #E9D5FF;
+  --muted: #18182A;
+  --muted-foreground: #A1A1B5;
+  --accent: #2A1A3E;
+  --accent-foreground: #FBCFE8;
+  --destructive: #F87171;
+  --destructive-foreground: #0F0F1A;
+  --border: #2A2A3F;
+  --input: #2A2A3F;
+  --ring: #A78BFA;
+
+  --chart-1: #A78BFA;
+  --chart-2: #F472B6;
+  --chart-3: #FBBF24;
+  --chart-4: #34D399;
+  --chart-5: #38BDF8;
+
+  --sidebar: #060610;
+  --sidebar-foreground: #FAFAF7;
+  --sidebar-primary: #7C3AED;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #18182A;
+  --sidebar-accent-foreground: #FAFAF7;
+  --sidebar-border: #18182A;
+  --sidebar-ring: #A78BFA;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-feature-settings: "ss01", "cv11";
+  }
+  ::selection {
+    background-color: rgba(124, 58, 237, 0.25);
+  }
+}
+
+/* Custom utility classes for CreateOS */
+@utility brand-gradient {
+  background-image: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+}
+
+@utility brand-gradient-text {
+  background-image: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+@utility glass {
+  background-color: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+@utility glass-dark {
+  background-color: rgba(15, 15, 26, 0.65);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+}
+
+/* Custom scrollbar */
+.custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb {
+  background-color: hsl(var(--muted-foreground) / 0.35);
+  border-radius: 9999px;
+}
+.custom-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: hsl(var(--muted-foreground) / 0.55);
+}
+
+/* Subtle grid pattern for hero */
+@utility bg-grid {
+  background-image:
+    linear-gradient(to right, rgba(124, 58, 237, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+}
+
+/* Glow */
+@utility glow-brand {
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.15),
+              0 18px 60px -20px rgba(124, 58, 237, 0.45),
+              0 8px 30px -10px rgba(236, 72, 153, 0.25);
+}
