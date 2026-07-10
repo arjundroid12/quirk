@@ -4,7 +4,7 @@ interface LogoProps {
   className?: string;
   /** Size in px for the square mark. Wordmark auto-scales. */
   size?: number;
-  /** Show "CreateOS" wordmark next to the mark. Default true. */
+  /** Show "QUIRK" wordmark next to the mark. Default true. */
   withWordmark?: boolean;
   /** Use light wordmark (for dark backgrounds). Default false. */
   light?: boolean;
@@ -22,12 +22,12 @@ export function LogoMark({ className, size = 40 }: { className?: string; size?: 
       aria-hidden="true"
     >
       <defs>
-        <linearGradient id="createos-mark-grad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+        <linearGradient id="quirk-mark-grad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
           <stop stopColor="#7C3AED" />
           <stop offset="1" stopColor="#EC4899" />
         </linearGradient>
       </defs>
-      <rect width="120" height="120" rx="28" fill="url(#createos-mark-grad)" />
+      <rect width="120" height="120" rx="28" fill="url(#quirk-mark-grad)" />
       <path
         d="M 82 30 Q 50 30 50 60 Q 50 90 82 90"
         stroke="white"
@@ -59,7 +59,7 @@ export function Logo({ className, size = 36, withWordmark = true, light = false 
           )}
           style={{ fontSize: size * 0.55 }}
         >
-          CreateOS
+          QUIRK
         </span>
       )}
     </div>

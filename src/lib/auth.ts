@@ -5,7 +5,7 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import { db } from "@/lib/db";
 
 /**
- * CreateOS Auth
+ * QUIRK Auth
  *
  * Two providers:
  *  1. Email (magic link) — for production, once SMTP is configured.
@@ -35,7 +35,7 @@ export const authOptions: NextAuthOptions = {
           pass: process.env.SMTP_PASS,
         },
       },
-      from: process.env.SMTP_FROM ?? "CreateOS <noreply@createos.app>",
+      from: process.env.SMTP_FROM ?? "QUIRK <noreply@quirk.app>",
     }),
     ...(enableDevBypass
       ? [

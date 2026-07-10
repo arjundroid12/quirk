@@ -34,7 +34,7 @@ export function Navbar() {
       )}
     >
       <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
-        <Link href="/" className="flex items-center" aria-label="CreateOS home">
+        <Link href="/" className="flex items-center" aria-label="QUIRK home">
           <Logo size={30} />
         </Link>
 

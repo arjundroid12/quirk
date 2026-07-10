@@ -1,17 +1,17 @@
 <svg width="240" height="48" viewBox="0 0 240 48" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="lg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+    <linearGradient id="quirk-mark-grad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
       <stop stop-color="#7C3AED"/>
       <stop offset="1" stop-color="#EC4899"/>
     </linearGradient>
   </defs>
   <!-- Mark -->
-  <rect x="0" y="0" width="48" height="48" rx="12" fill="url(#lg)"/>
+  <rect x="0" y="0" width="48" height="48" rx="12" fill="url(#quirk-mark-grad)"/>
   <path d="M 33 12 Q 20 12 20 24 Q 20 36 33 36" stroke="white" stroke-width="4" stroke-linecap="round" fill="none"/>
   <path d="M 24 19.2 L 31.2 24 L 24 28.8 Z" fill="white"/>
   <g transform="translate(34.4 14.4)">
     <path d="M 0 -3.2 L 0.8 -0.8 L 3.2 0 L 0.8 0.8 L 0 3.2 L -0.8 0.8 L -3.2 0 L -0.8 -0.8 Z" fill="white" opacity="0.95"/>
   </g>
   <!-- Wordmark -->
-  <text x="60" y="32" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700" fill="#0F0F1A" letter-spacing="-0.5">CreateOS</text>
+  <text x="60" y="32" font-family="Inter, system-ui, sans-serif" font-size="22" font-weight="700" fill="#0F0F1A" letter-spacing="-0.5">QUIRK</text>
 </svg>

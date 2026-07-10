@@ -1,11 +1,11 @@
 <svg width="32" height="32" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="g" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
+    <linearGradient id="quirk-fav-grad" x1="0" y1="0" x2="120" y2="120" gradientUnits="userSpaceOnUse">
       <stop stop-color="#7C3AED"/>
       <stop offset="1" stop-color="#EC4899"/>
     </linearGradient>
   </defs>
-  <rect width="120" height="120" rx="28" fill="url(#g)"/>
+  <rect width="120" height="120" rx="28" fill="url(#quirk-fav-grad)"/>
   <path d="M 82 30 Q 50 30 50 60 Q 50 90 82 90" stroke="white" stroke-width="10" stroke-linecap="round" fill="none"/>
   <path d="M 60 48 L 78 60 L 60 72 Z" fill="white"/>
   <g transform="translate(86 36)">

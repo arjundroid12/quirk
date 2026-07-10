@@ -25,11 +25,11 @@ const jetbrains = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CreateOS — AI toolkit for content creators",
+  title: "QUIRK — AI toolkit for content creators",
   description:
-    "Plan, script, optimize, and grow — all in one AI-native workspace. Built by creators, for creators.",
+    "Find your quirk. Ship it. The AI-native workspace for creators who'd rather create than juggle 5 tools.",
   keywords: [
-    "CreateOS",
+    "QUIRK",
     "AI creator tools",
     "script generator",
     "content ideas",
@@ -40,19 +40,19 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "Arjun Vashishtha" }],
   icons: {
-    icon: "/createos/favicon.svg",
+    icon: "/quirk/favicon.svg",
   },
   openGraph: {
-    title: "CreateOS — AI toolkit for content creators",
+    title: "QUIRK — AI toolkit for content creators",
     description:
-      "Plan, script, optimize, and grow — all in one AI-native workspace. Built by creators, for creators.",
-    siteName: "CreateOS",
+      "Find your quirk. Ship it. The AI-native workspace for creators who'd rather create than juggle 5 tools.",
+    siteName: "QUIRK",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "CreateOS",
-    description: "AI toolkit for content creators. Plan, script, optimize, grow.",
+    title: "QUIRK",
+    description: "AI toolkit for content creators. Find your quirk. Ship it.",
   },
 };
 

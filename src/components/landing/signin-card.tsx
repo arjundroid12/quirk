@@ -69,7 +69,7 @@ export function SignInCard({ next }: { next: string }) {
       <div className="relative">
         <div className="inline-flex items-center gap-2 rounded-full border border-brand/30 bg-brand/5 px-3 py-1 text-xs font-mono uppercase tracking-widest text-brand">
           <Sparkles className="h-3.5 w-3.5" />
-          Sign in to CreateOS
+          Sign in to QUIRK
         </div>
 
         <h1 className="mt-5 font-display text-3xl font-bold tracking-tight">

@@ -58,7 +58,7 @@ const outcomes = [
 const testimonials = [
   {
     quote:
-      "I stopped opening ChatGPT, Canva, and Notion in three different tabs. CreateOS just gets the creator workflow.",
+      "I stopped opening ChatGPT, Canva, and Notion in three different tabs. QUIRK just gets the creator workflow.",
     name: "Maya R.",
     title: "UGC creator, 240k Reels",
   },
@@ -114,7 +114,7 @@ export default function LandingPage() {
                       <span className="text-muted-foreground line-through/0">{p.today}</span>
                     </div>
                     <div className="flex items-start gap-2">
-                      <span className="mt-0.5 text-xs font-mono uppercase tracking-widest text-brand w-20 shrink-0">CreateOS</span>
+                      <span className="mt-0.5 text-xs font-mono uppercase tracking-widest text-brand w-20 shrink-0">QUIRK</span>
                       <span className="text-foreground font-medium">{p.with}</span>
                     </div>
                   </div>
@@ -186,7 +186,7 @@ export default function LandingPage() {
                   Less grind. More great work.
                 </h2>
                 <p className="mt-4 text-white/70 text-lg">
-                  The #1 reason creators quit isn't lack of talent — it's burnout from the constant grind of ideation, optimization, and platform-juggling. CreateOS takes the grind off your plate.
+                  The #1 reason creators quit isn't lack of talent — it's burnout from the constant grind of ideation, optimization, and platform-juggling. QUIRK takes the grind off your plate.
                 </p>
               </div>
 
@@ -276,7 +276,7 @@ export default function LandingPage() {
             <div className="md:col-span-2">
               <Logo light size={32} />
               <p className="mt-4 text-white/60 text-sm max-w-sm">
-                AI-powered toolkit that helps content creators plan, script, optimize, and grow — all in one place. Built by creators, for creators.
+                The AI-native workspace for creators who'd rather create than juggle 5 tools. Find your quirk. Ship it.
               </p>
               <div className="mt-6 flex items-center gap-3">
                 <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="h-9 w-9 rounded-full border border-white/15 flex items-center justify-center hover:bg-white/10 transition" aria-label="Twitter">
@@ -315,8 +315,8 @@ export default function LandingPage() {
           </div>
 
           <div className="mt-10 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/40">
-            <p>© 2026 CreateOS. All rights reserved.</p>
-            <p className="font-mono">v0.1.0 — Session 1 build</p>
+            <p>© 2026 QUIRK. All rights reserved.</p>
+            <p className="font-mono">v0.2.0 — QUIRK build</p>
           </div>
         </div>
       </footer>

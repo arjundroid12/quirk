@@ -46,7 +46,7 @@ export function Hero() {
               transition={{ duration: 0.6, delay: 0.12 }}
               className="mt-6 text-lg sm:text-xl text-muted-foreground max-w-xl"
             >
-              CreateOS is the AI workspace that helps creators plan, script, optimize, and grow — all in one place. Built by creators, for creators.
+              QUIRK is the AI workspace that helps creators plan, script, optimize, and grow — all in one place. Built by creators, for creators.
             </motion.p>
 
             <motion.div
@@ -105,7 +105,7 @@ export function Hero() {
                 <div className="h-2.5 w-2.5 rounded-full bg-amber-400/70" />
                 <div className="h-2.5 w-2.5 rounded-full bg-green-400/70" />
                 <div className="ml-3 flex-1 h-6 rounded-md bg-muted/60 flex items-center px-3 text-[10px] font-mono text-muted-foreground">
-                  createos.app/app/scripts
+                  quirk.app/app/scripts
                 </div>
               </div>
 
@@ -116,7 +116,7 @@ export function Hero() {
                   <div className="w-44 shrink-0 bg-sidebar p-3 text-sidebar-foreground">
                     <div className="flex items-center gap-2 mb-4">
                       <LogoMark size={20} />
-                      <span className="text-xs font-bold">CreateOS</span>
+                      <span className="text-xs font-bold">QUIRK</span>
                     </div>
                     {["Scripts", "Ideas", "Thumbnails", "Calendar", "Settings"].map((s, i) => (
                       <div

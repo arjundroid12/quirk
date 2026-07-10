@@ -72,3 +72,29 @@ Stage Summary:
 - End-to-end verified: generate, save, change status, filter, refresh — all working
 - Cloudflare deploy still deferred (same edge-runtime migration blocker)
 - Awaiting next command from dispatcher
+
+---
+Task ID: cmd-002
+Agent: main (Super Z) — worker mode
+Task: CMD-002 — Rename codebase from CreateOS → QUIRK
+
+Work Log:
+- Pulled createos-context, found CMD-002 (lowest pending), marked [~], pushed
+- Grepped src/ + public/ — found 10 src files + 2 SVGs + package.json with createos refs
+- Renamed public/createos/ → public/quirk/ (3 SVGs)
+- Rewrote SVGs: wordmark "CreateOS" → "QUIRK", gradient IDs renamed
+- Updated 11 source files: layout.tsx (metadata + favicon path), page.tsx (landing copy), globals.css (comments), logo.tsx, hero.tsx, navbar.tsx, signin-card.tsx, shell.tsx, auth.ts (JSDoc + SMTP_FROM), zai.ts (3 AI prompts), package.json (name)
+- Tagline: "Find your quirk. Ship it."
+- Verified via agent-browser: landing/dashboard/scripts/ideas/new-script all show QUIRK, no CreateOS in DOM (only test email arjun@createos.app in DB)
+- Lint: 0 errors, 0 warnings. Build: 17 routes clean.
+- 4 screenshots saved (14-17)
+- Marked CMD-002 [x] in COMMANDS.md, moved to Completed
+- Updated STATE.md + appended to SESSION-LOG.md
+- Committed + pushed to createos-context
+
+Stage Summary:
+- Codebase fully rebranded CreateOS → QUIRK (11 files + 3 SVGs + 1 folder)
+- Tagline: "Find your quirk. Ship it."
+- End-to-end verified: zero CreateOS leaks in DOM
+- Cloudflare deploy still deferred (same edge-runtime blocker)
+- Awaiting next command

@@ -47,7 +47,7 @@ export function AppShell({
         <div className="h-16 flex items-center px-5 border-b border-sidebar-border">
           <Link href="/app" className="flex items-center gap-2">
             <LogoMark size={28} />
-            <span className="font-display font-bold tracking-tight">CreateOS</span>
+            <span className="font-display font-bold tracking-tight">QUIRK</span>
           </Link>
         </div>
 

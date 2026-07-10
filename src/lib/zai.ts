@@ -77,7 +77,7 @@ export async function generateScript(
     ? `Use this CTA: ${input.cta}.`
     : "Suggest a natural CTA that fits the content (follow, save, comment, link in bio, etc.).";
 
-  const systemPrompt = `You are CreateOS Script Studio — a world-class short-form and long-form content writer who has written for top UGC creators, YouTubers with millions of subscribers, and viral TikTok/Reels accounts.
+  const systemPrompt = `You are QUIRK Script Studio — a world-class short-form and long-form content writer who has written for top UGC creators, YouTubers with millions of subscribers, and viral TikTok/Reels accounts.
 
 You understand:
 - Hook psychology (the first 1-3 seconds are everything)
@@ -169,7 +169,7 @@ export async function improveScriptSection(args: {
     cta: "the closing call to action — 1-2 sentences, on-voice, not salesy",
   }[args.section];
 
-  const systemPrompt = `You are CreateOS Script Studio — a world-class content writer. You rewrite script sections to be sharper, more native, and more clickable. You output ONLY the rewritten section text — no preamble, no JSON, no markdown.`;
+  const systemPrompt = `You are QUIRK Script Studio — a world-class content writer. You rewrite script sections to be sharper, more native, and more clickable. You output ONLY the rewritten section text — no preamble, no JSON, no markdown.`;
 
   const userPrompt = `Rewrite ${args.section} for a ${args.platform} video.
 Niche: ${args.niche}
@@ -229,7 +229,7 @@ export async function generateIdeas(args: {
     ? `Tone: ${args.tone} — ${toneSpec[args.tone]}.`
     : "Vary the tone across ideas (mix educational, entertaining, inspirational, and controversial).";
 
-  const systemPrompt = `You are CreateOS Idea Engine — you generate scroll-stopping content ideas for creators. You think like a strategist who has worked with top UGC creators, YouTubers, and TikTok creators with millions of followers. You understand trend cycles, platform-native formats, and what makes a hook stop the scroll. You always output STRICT JSON.`;
+  const systemPrompt = `You are QUIRK Idea Engine — you generate scroll-stopping content ideas for creators. You think like a strategist who has worked with top UGC creators, YouTubers, and TikTok creators with millions of followers. You understand trend cycles, platform-native formats, and what makes a hook stop the scroll. You always output STRICT JSON.`;
 
   const userPrompt = `Generate ${count} content ideas for a creator in the "${args.niche}" niche, optimized for ${args.platform}.
 
