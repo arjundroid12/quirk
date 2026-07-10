@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,6 +9,7 @@ import { Mail, Loader2, CheckCircle2, AlertCircle, Sparkles, Zap } from "lucide-
 import { motion } from "framer-motion";
 
 export function SignInCard({ next }: { next: string }) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "sent" | "error">("idle");
@@ -24,36 +25,26 @@ export function SignInCard({ next }: { next: string }) {
     setStatus("loading");
     setErrorMsg("");
 
-    // Try dev bypass first (works locally without SMTP)
-    const res = await signIn("dev-bypass", {
-      email,
-      name: name || undefined,
-      redirect: false,
-      callbackUrl: next,
-    });
-
-    if (res?.error) {
-      // Dev bypass not available — fall back to magic link
-      const res2 = await signIn("email", {
-        email,
-        redirect: false,
-        callbackUrl: next,
+    try {
+      const res = await fetch("/api/auth/signin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          name: name || undefined,
+        }),
       });
-      if (res2?.error) {
-        setStatus("error");
-        setErrorMsg(
-          res2.error === "EmailSigninError"
-            ? "Magic-link email could not be sent. (Dev mode: check server logs for the sign-in URL.)"
-            : res2.error
-        );
-      } else {
-        setStatus("sent");
+      const data = await res.json();
+
+      if (!data.ok) {
+        throw new Error(data.error ?? "Failed to sign in");
       }
-    } else if (res?.ok) {
-      // Dev bypass worked — go to the app
-      window.location.href = res.url ?? next;
-    } else {
-      setStatus("sent");
+
+      // Success — redirect to next
+      window.location.href = next || "/app";
+    } catch (err: any) {
+      setStatus("error");
+      setErrorMsg(err?.message ?? "Failed to sign in");
     }
   }
 
@@ -85,9 +76,6 @@ export function SignInCard({ next }: { next: string }) {
             <p className="mt-2 font-semibold">Check your inbox.</p>
             <p className="mt-1 text-sm text-muted-foreground">
               We sent a magic link to <span className="font-mono text-foreground">{email}</span>. Click it to sign in.
-            </p>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Running locally? Check <span className="font-mono">dev.log</span> — the magic link is printed there in dev mode.
             </p>
           </div>
         ) : (

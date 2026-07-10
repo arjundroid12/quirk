@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
 import { z } from "zod";
+import { queryOne, execute, generateId, now } from "@/lib/db";
+
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 const WaitlistSchema = z.object({
   email: z.string().email().max(120),
@@ -14,40 +17,41 @@ export async function POST(req: Request) {
     const body = await req.json();
     const parsed = WaitlistSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid email" },
-        { status: 400 }
-      );
+      return NextResponse.json({ ok: false, error: "Invalid email" }, { status: 400 });
     }
-
     const { email, name, niche, source } = parsed.data;
 
-    // Upsert — if already on waitlist, just update niche/name
-    const entry = await db.waitlist.upsert({
-      where: { email: email.toLowerCase() },
-      update: {
-        ...(name ? { name } : {}),
-        ...(niche ? { niche } : {}),
-      },
-      create: {
-        email: email.toLowerCase(),
-        name: name ?? null,
-        niche: niche ?? null,
-        source,
-      },
-    });
+    const existing = await queryOne<{ id: string }>(
+      "SELECT id FROM Waitlist WHERE email = ?",
+      [email.toLowerCase()]
+    );
 
-    return NextResponse.json({ ok: true, id: entry.id });
+    let id: string;
+    if (existing) {
+      await execute(
+        "UPDATE Waitlist SET name = ?, niche = ? WHERE id = ?",
+        [name ?? null, niche ?? null, existing.id]
+      );
+      id = existing.id;
+    } else {
+      id = generateId();
+      await execute(
+        "INSERT INTO Waitlist (id, email, name, niche, source, createdAt) VALUES (?, ?, ?, ?, ?, ?)",
+        [id, email.toLowerCase(), name ?? null, niche ?? null, source, now()]
+      );
+    }
+    return NextResponse.json({ ok: true, id });
   } catch (err: any) {
     console.error("[waitlist] error", err);
-    return NextResponse.json(
-      { ok: false, error: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: "Server error" }, { status: 500 });
   }
 }
 
 export async function GET() {
-  const count = await db.waitlist.count();
-  return NextResponse.json({ count });
+  try {
+    const rows = await query<{ count: number }>("SELECT COUNT(*) as count FROM Waitlist");
+    return NextResponse.json({ count: rows[0]?.count || 0 });
+  } catch {
+    return NextResponse.json({ count: 0 });
+  }
 }

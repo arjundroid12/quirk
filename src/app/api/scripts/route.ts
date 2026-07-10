@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
-import { getSession } from "@/lib/session";
-import { generateScript, type ScriptGenInput } from "@/lib/zai";
 import { z } from "zod";
+import { query, execute, generateId, now } from "@/lib/db";
+import { getSession } from "@/lib/auth-edge";
+import { generateScript, type ScriptGenInput } from "@/lib/zai";
+
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 const CreateScriptSchema = z.object({
   niche: z.string().min(2).max(80),
@@ -11,9 +14,7 @@ const CreateScriptSchema = z.object({
   topic: z.string().max(200).optional().nullable(),
   durationSec: z.number().int().min(5).max(1800).optional().nullable(),
   cta: z.string().max(200).optional().nullable(),
-  // If true, we generate via AI. If false (or absent), we just save a draft.
   generate: z.boolean().default(true),
-  // For manual save (no gen), include title + content
   title: z.string().max(200).optional().nullable(),
   content: z.string().optional().nullable(),
 });
@@ -24,18 +25,12 @@ export async function POST(req: Request) {
     if (!session?.user) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
-    const userId = (session.user as any).id as string;
-    if (!userId) {
-      return NextResponse.json({ ok: false, error: "No user id" }, { status: 401 });
-    }
+    const userId = session.user.id;
 
     const body = await req.json();
     const parsed = CreateScriptSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid input", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ ok: false, error: "Invalid input" }, { status: 400 });
     }
     const input = parsed.data;
 
@@ -75,26 +70,17 @@ export async function POST(req: Request) {
       ].join("\n");
     }
 
-    const script = await db.script.create({
-      data: {
-        title: title || "Untitled script",
-        content,
-        platform: input.platform,
-        tone: input.tone,
-        niche: input.niche,
-        cta: cta || null,
-        tags: hashtags.join(","),
-        authorId: userId,
-      },
-    });
+    const id = generateId();
+    await execute(
+      `INSERT INTO Script (id, title, content, platform, tone, niche, cta, tags, authorId, createdAt, updatedAt)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [id, title || "Untitled script", content, input.platform, input.tone, input.niche, cta || null, hashtags.join(","), userId, now(), now()]
+    );
 
-    return NextResponse.json({ ok: true, script });
+    return NextResponse.json({ ok: true, script: { id, title, content, platform: input.platform, tone: input.tone, niche: input.niche, cta: cta || null, tags: hashtags.join(","), authorId: userId, createdAt: now(), updatedAt: now() } });
   } catch (err: any) {
     console.error("[scripts POST] error", err);
-    return NextResponse.json(
-      { ok: false, error: err?.message ?? "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: err?.message ?? "Server error" }, { status: 500 });
   }
 }
 
@@ -104,20 +90,13 @@ export async function GET() {
     if (!session?.user) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
-    const userId = (session.user as any).id as string;
-
-    const scripts = await db.script.findMany({
-      where: { authorId: userId },
-      orderBy: { createdAt: "desc" },
-      take: 100,
-    });
-
+    const scripts = await query(
+      "SELECT * FROM Script WHERE authorId = ? ORDER BY createdAt DESC LIMIT 100",
+      [session.user.id]
+    );
     return NextResponse.json({ ok: true, scripts });
   } catch (err: any) {
     console.error("[scripts GET] error", err);
-    return NextResponse.json(
-      { ok: false, error: err?.message ?? "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: err?.message ?? "Server error" }, { status: 500 });
   }
 }

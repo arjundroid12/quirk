@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
-import { getSession } from "@/lib/session";
-import { improveScriptSection, type ScriptGenInput } from "@/lib/zai";
 import { z } from "zod";
+import { getSession } from "@/lib/auth-edge";
+import { improveScriptSection, type ScriptGenInput } from "@/lib/zai";
+
+export const runtime = "edge";
+export const dynamic = "force-dynamic";
 
 const ImproveSchema = z.object({
   section: z.enum(["hook", "body", "cta"]),
@@ -18,33 +21,21 @@ export async function POST(req: Request) {
     if (!session?.user) {
       return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     }
-
     const body = await req.json();
     const parsed = ImproveSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json(
-        { ok: false, error: "Invalid input", details: parsed.error.flatten() },
-        { status: 400 }
-      );
+      return NextResponse.json({ ok: false, error: "Invalid input" }, { status: 400 });
     }
-
     const { section, current, niche, platform, tone, instruction } = parsed.data;
-
     const improved = await improveScriptSection({
-      section,
-      current,
-      niche,
+      section, current, niche,
       platform: platform as ScriptGenInput["platform"],
       tone: tone as ScriptGenInput["tone"],
       instruction,
     });
-
     return NextResponse.json({ ok: true, improved });
   } catch (err: any) {
     console.error("[scripts improve] error", err);
-    return NextResponse.json(
-      { ok: false, error: err?.message ?? "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ ok: false, error: err?.message ?? "Server error" }, { status: 500 });
   }
 }

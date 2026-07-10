@@ -2,11 +2,13 @@
 
 generator client {
   provider = "prisma-client-js"
+  edge = true
 }
 
 datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
 }
 
 model User {
