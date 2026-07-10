@@ -23,6 +23,7 @@ model User {
   sessions Session[]
   scripts Script[]
   ideas Idea[]
+  thumbnails Thumbnail[]
   waitlist Waitlist?
 }
 
@@ -99,6 +100,27 @@ model Idea {
 
   @@index([authorId, createdAt])
   @@index([authorId, status])
+}
+
+model Thumbnail {
+  id                  String   @id @default(cuid())
+  userId              String
+  imageData           String   // base64 data URL
+  fileName            String?
+  score               Float    // overall 0-100
+  compositionScore    Float    // 0-100
+  emotionScore        Float    // 0-100
+  textLegibilityScore Float    // 0-100
+  ctrPrediction       Float    // predicted CTR % (0-5)
+  reasoning           String   // AI explanation
+  isWinner            Boolean  @default(false)
+  batchId             String   // group uploads analyzed together
+  createdAt           DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, batchId])
 }
 
 model Waitlist {

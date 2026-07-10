@@ -282,3 +282,113 @@ Output ONLY the JSON array. No markdown fences, no prose.`;
     format: String(p.format ?? "tutorial").slice(0, 40),
   }));
 }
+
+/**
+ * Analyze a thumbnail image via Z.AI vision model.
+ * Scores: composition, emotion, text legibility (each 0-100), predicted CTR (0-5%).
+ * Returns reasoning + an overall score.
+ */
+export interface ThumbnailAnalysis {
+  composition: number;
+  emotion: number;
+  textLegibility: number;
+  ctr: number;
+  reasoning: string;
+  overall: number;
+}
+
+export async function analyzeThumbnail(args: {
+  imageDataUrl: string;
+  niche?: string;
+  platform?: string;
+}): Promise<ThumbnailAnalysis> {
+  const zai = await getZAI();
+
+  const systemPrompt = `You are QUIRK Thumbnail Tester — an expert YouTube/TikTok/Reels thumbnail strategist. You've designed thumbnails for channels with millions of subscribers. You understand click-through rate psychology, visual hierarchy, emotion-driven clicks, and what makes a thumbnail stop the scroll.
+
+You analyze thumbnails and score them on 4 dimensions:
+- composition (0-100): visual balance, rule of thirds, focal point clarity, no clutter
+- emotion (0-100): facial expression intensity, emotional hook, viewer curiosity trigger
+- textLegibility (0-100): text size, contrast, readability at small sizes, no overlap with subject
+- ctr (0-5.0): predicted click-through rate percentage (e.g. 4.2 = 4.2% CTR)
+
+You ALWAYS output STRICT JSON. No markdown, no prose outside JSON.`;
+
+  const nicheLine = args.niche ? `The creator's niche is "${args.niche}".` : "";
+  const platformLine = args.platform
+    ? `The thumbnail is for ${args.platform}.`
+    : "The thumbnail is for a short-form video platform (Reels/Shorts/TikTok).";
+
+  const userPrompt = `Analyze this thumbnail. ${platformLine} ${nicheLine}
+
+Return JSON with EXACTLY these keys:
+{
+  "composition": <number 0-100>,
+  "emotion": <number 0-100>,
+  "textLegibility": <number 0-100>,
+  "ctr": <number 0-5.0>,
+  "reasoning": "<2-3 sentences explaining the scores, citing specific elements in the image. Mention what's working AND what could be improved.>"
+}
+
+Output ONLY the JSON object. No markdown fences, no prose.`;
+
+  const response = await zai.chat.completions.createVision({
+    messages: [
+      { role: "system", content: systemPrompt },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: userPrompt },
+          {
+            type: "image_url",
+            image_url: { url: args.imageDataUrl },
+          },
+        ],
+      },
+    ],
+    thinking: { type: "disabled" },
+  });
+
+  const raw = (response.choices?.[0]?.message?.content ?? "")
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```$/i, "")
+    .trim();
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (match) {
+      parsed = JSON.parse(match[0]);
+    } else {
+      throw new Error("Z.AI vision returned non-JSON. Raw: " + raw.slice(0, 200));
+    }
+  }
+
+  const composition = clamp(Number(parsed.composition ?? 0), 0, 100);
+  const emotion = clamp(Number(parsed.emotion ?? 0), 0, 100);
+  const textLegibility = clamp(Number(parsed.textLegibility ?? 0), 0, 100);
+  const ctr = clamp(Number(parsed.ctr ?? 0), 0, 5);
+  const reasoning = String(parsed.reasoning ?? "").slice(0, 1200);
+
+  // Overall = weighted average (composition 30%, emotion 25%, text 25%, CTR normalized 20%)
+  const ctrNormalized = (ctr / 5) * 100;
+  const overall = Math.round(
+    composition * 0.3 + emotion * 0.25 + textLegibility * 0.25 + ctrNormalized * 0.2
+  );
+
+  return {
+    composition,
+    emotion,
+    textLegibility,
+    ctr,
+    reasoning,
+    overall: clamp(overall, 0, 100),
+  };
+}
+
+function clamp(n: number, min: number, max: number) {
+  if (Number.isNaN(n)) return min;
+  return Math.max(min, Math.min(max, n));
+}

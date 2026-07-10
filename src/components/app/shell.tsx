@@ -28,7 +28,7 @@ const navItems = [
   { href: "/app", label: "Dashboard", icon: LayoutDashboard, exact: true },
   { href: "/app/scripts", label: "Script Studio", icon: PenLine },
   { href: "/app/ideas", label: "Idea Engine", icon: Lightbulb },
-  { href: "/app/thumbnails", label: "Thumbnail Tester", icon: ImagePlus, badge: "Soon" },
+  { href: "/app/thumbnails", label: "Thumbnail Tester", icon: ImagePlus },
 ];
 
 export function AppShell({

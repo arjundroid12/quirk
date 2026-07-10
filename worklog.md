@@ -98,3 +98,44 @@ Stage Summary:
 - End-to-end verified: zero CreateOS leaks in DOM
 - Cloudflare deploy still deferred (same edge-runtime blocker)
 - Awaiting next command
+
+---
+Task ID: cmd-003
+Agent: main (Super Z) — worker mode
+Task: CMD-003 — Complete v1: Thumbnail Tester + Polish + Pre-deploy prep
+
+Work Log:
+PART A (Thumbnail Tester):
+- Added Prisma Thumbnail model (12 fields, 2 indexes) + back-relation on User, db pushed
+- Wrote analyzeThumbnail() in zai.ts using zai.chat.completions.createVision() — JSON output with composition/emotion/textLegibility/ctr/reasoning + weighted overall score
+- Built 3 API routes: POST /api/thumbnails (parallel analysis, picks winner, batchId, persists), GET (grouped by batch), DELETE /[id]
+- Updated middleware to protect /api/thumbnails/:path*
+- Built /app/thumbnails page (server) + ThumbnailTester client component (drag-drop upload, results cards with 4 score bars + reasoning, winner banner with Crown icon, past batches section)
+- Updated dashboard: removed "Soon" from Thumbnail Tester card, added Thumbnails stat card, sidebar nav badge removed
+- Verified via agent-browser: uploaded 2 test PNGs, analyzed in ~20s, scores returned, winner correctly identified, persisted to DB
+
+PART B (Polish):
+- CF Web Analytics beacon in layout.tsx (env-gated)
+- Dynamic OG image at src/app/opengraph-image.tsx (1200x630, brand gradient, runtime=edge)
+- Custom 404 at src/app/not-found.tsx (QUIRK-branded)
+- Mobile QA via agent-browser 375x812 — all 9 pages render correctly
+- Empty states verified on all list pages
+- loading.tsx skeletons for /app, /app/scripts, /app/ideas, /app/thumbnails
+- error.tsx for /app/* routes
+
+PART C (Pre-deploy):
+- .env.example with all 8 env vars documented
+- README.md with features, stack, setup, deploy instructions
+- Lint 0/0, Build 20 routes clean
+
+PART D:
+- Updated STATE.md + appended to SESSION-LOG.md
+- Marked CMD-003 [x] in COMMANDS.md
+- 12 screenshots saved (18-29)
+- Committed + pushed
+
+Stage Summary:
+- v1 FEATURES COMPLETE: Script Studio + Idea Engine + Thumbnail Tester all live
+- Polish done: analytics, OG, 404, mobile QA, loading/error states
+- Pre-deploy ready: .env.example, README, clean lint+build
+- Cloudflare deploy is the ONLY remaining blocker (needs Turso + Resend creds)

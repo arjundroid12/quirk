@@ -11,7 +11,7 @@ export default async function AppDashboard() {
   const user = session?.user as any;
   const userId = user?.id;
 
-  const [scripts, waitlistCount, ideasCount] = await Promise.all([
+  const [scripts, waitlistCount, ideasCount, thumbnailsCount] = await Promise.all([
     userId
       ? db.script.findMany({
           where: { authorId: userId },
@@ -21,6 +21,7 @@ export default async function AppDashboard() {
       : [],
     db.waitlist.count(),
     userId ? db.idea.count({ where: { authorId: userId } }) : 0,
+    userId ? db.thumbnail.count({ where: { userId } }) : 0,
   ]);
 
   const publishedCount = userId
@@ -91,20 +92,24 @@ export default async function AppDashboard() {
           </span>
         </Link>
 
-        <div className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 opacity-70">
+        <Link
+          href="/app/thumbnails"
+          className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand/5"
+        >
           <div className="flex items-center justify-between">
             <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-rose-500 to-orange-500 flex items-center justify-center text-white">
               <ImagePlus className="h-5 w-5" />
             </div>
-            <span className="text-[10px] font-mono uppercase tracking-widest text-brand-pink bg-brand-pink/10 px-2 py-0.5 rounded-full">
-              Soon
-            </span>
+            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </div>
           <h3 className="mt-4 font-display font-bold">Thumbnail Tester</h3>
           <p className="mt-1 text-sm text-muted-foreground">
             Upload 2-3 thumbnails. AI scores and picks the winner.
           </p>
-        </div>
+          <span className="mt-3 inline-block text-xs font-mono uppercase tracking-widest text-brand">
+            {thumbnailsCount > 0 ? `${thumbnailsCount} tested →` : "Live now →"}
+          </span>
+        </Link>
       </div>
 
       {/* Recent scripts */}
@@ -167,6 +172,14 @@ export default async function AppDashboard() {
         </div>
         <div className="rounded-2xl border border-border bg-card p-5">
           <div className="flex items-center justify-between">
+            <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Thumbnails</span>
+            <ImagePlus className="h-4 w-4 text-brand" />
+          </div>
+          <div className="mt-2 font-display text-3xl font-bold">{thumbnailsCount}</div>
+          <p className="mt-1 text-xs text-muted-foreground">tested</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-card p-5">
+          <div className="flex items-center justify-between">
             <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Waitlist</span>
             <TrendingUp className="h-4 w-4 text-brand-pink" />
           </div>
@@ -174,14 +187,6 @@ export default async function AppDashboard() {
             {waitlistCount + 4200}
           </div>
           <p className="mt-1 text-xs text-muted-foreground">creators ahead of launch</p>
-        </div>
-        <div className="rounded-2xl border border-border bg-card p-5">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase tracking-widest text-muted-foreground">Plan</span>
-            <Sparkles className="h-4 w-4 text-brand" />
-          </div>
-          <div className="mt-2 font-display text-3xl font-bold">Free</div>
-          <p className="mt-1 text-xs text-muted-foreground">Founding member status</p>
         </div>
       </div>
     </div>
