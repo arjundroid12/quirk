@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { query, execute, generateId, now } from "@/lib/db";
-import { getSession } from "@/lib/auth-edge";
+import { db } from "@/lib/db";
+import { getSession } from "@/lib/session";
 import { generateScript, type ScriptGenInput } from "@/lib/zai";
-
-export const runtime = "edge";
-export const dynamic = "force-dynamic";
+import { z } from "zod";
 
 const CreateScriptSchema = z.object({
   niche: z.string().min(2).max(80),
@@ -22,62 +19,44 @@ const CreateScriptSchema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const userId = session.user.id;
+    if (!session?.user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    const userId = (session.user as any).id as string;
+    if (!userId) return NextResponse.json({ ok: false, error: "No user id" }, { status: 401 });
 
     const body = await req.json();
     const parsed = CreateScriptSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ ok: false, error: "Invalid input" }, { status: 400 });
-    }
+    if (!parsed.success) return NextResponse.json({ ok: false, error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
     const input = parsed.data;
 
     let title = input.title ?? "";
     let content = input.content ?? "";
-    let hook = "";
     let cta = input.cta ?? "";
     let hashtags: string[] = [];
 
     if (input.generate) {
       const genInput: ScriptGenInput = {
-        niche: input.niche,
-        platform: input.platform,
-        tone: input.tone,
-        topic: input.topic ?? undefined,
-        durationSec: input.durationSec ?? undefined,
-        cta: input.cta ?? undefined,
+        niche: input.niche, platform: input.platform, tone: input.tone,
+        topic: input.topic ?? undefined, durationSec: input.durationSec ?? undefined, cta: input.cta ?? undefined,
       };
       const gen = await generateScript(genInput);
       title = gen.title;
-      hook = gen.hook;
       cta = gen.cta;
       hashtags = gen.hashtags;
       content = [
-        `# ${gen.title}`,
-        "",
-        `**Hook:** ${gen.hook}`,
-        "",
-        gen.body,
-        "",
-        `**CTA:** ${gen.cta}`,
-        "",
-        `**Hashtags:** ${gen.hashtags.map((h) => "#" + h).join(" ")}`,
-        "",
-        `> Estimated duration: ${gen.estimatedDuration}`,
-        `> ${gen.notes}`,
+        `# ${gen.title}`, "", `**Hook:** ${gen.hook}`, "", gen.body, "",
+        `**CTA:** ${gen.cta}`, "", `**Hashtags:** ${gen.hashtags.map((h) => "#" + h).join(" ")}`,
+        "", `> Estimated duration: ${gen.estimatedDuration}`, `> ${gen.notes}`,
       ].join("\n");
     }
 
-    const id = generateId();
-    await execute(
-      `INSERT INTO Script (id, title, content, platform, tone, niche, cta, tags, authorId, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [id, title || "Untitled script", content, input.platform, input.tone, input.niche, cta || null, hashtags.join(","), userId, now(), now()]
-    );
-
-    return NextResponse.json({ ok: true, script: { id, title, content, platform: input.platform, tone: input.tone, niche: input.niche, cta: cta || null, tags: hashtags.join(","), authorId: userId, createdAt: now(), updatedAt: now() } });
+    const script = await db.script.create({
+      data: {
+        title: title || "Untitled script", content,
+        platform: input.platform, tone: input.tone, niche: input.niche,
+        cta: cta || null, tags: hashtags.join(","), authorId: userId,
+      },
+    });
+    return NextResponse.json({ ok: true, script });
   } catch (err: any) {
     console.error("[scripts POST] error", err);
     return NextResponse.json({ ok: false, error: err?.message ?? "Server error" }, { status: 500 });
@@ -87,13 +66,9 @@ export async function POST(req: Request) {
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const scripts = await query(
-      "SELECT * FROM Script WHERE authorId = ? ORDER BY createdAt DESC LIMIT 100",
-      [session.user.id]
-    );
+    if (!session?.user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    const userId = (session.user as any).id as string;
+    const scripts = await db.script.findMany({ where: { authorId: userId }, orderBy: { createdAt: "desc" }, take: 100 });
     return NextResponse.json({ ok: true, scripts });
   } catch (err: any) {
     console.error("[scripts GET] error", err);

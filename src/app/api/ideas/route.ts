@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { query, execute, generateId, now } from "@/lib/db";
-import { getSession } from "@/lib/auth-edge";
+import { db } from "@/lib/db";
+import { getSession } from "@/lib/session";
 import { generateIdeas, type IdeaTone } from "@/lib/zai";
-
-export const runtime = "edge";
-export const dynamic = "force-dynamic";
+import { z } from "zod";
 
 const GenerateSchema = z.object({
   niche: z.string().min(2).max(80),
@@ -18,40 +15,31 @@ const GenerateSchema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
-    const userId = session.user.id;
+    if (!session?.user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    const userId = (session.user as any).id as string;
+    if (!userId) return NextResponse.json({ ok: false, error: "No user id" }, { status: 401 });
 
     const body = await req.json();
     const parsed = GenerateSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ ok: false, error: "Invalid input" }, { status: 400 });
-    }
+    if (!parsed.success) return NextResponse.json({ ok: false, error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
     const input = parsed.data;
 
     const ideas = await generateIdeas({
-      niche: input.niche,
-      platform: input.platform,
-      tone: input.tone as IdeaTone | undefined,
-      count: input.count,
+      niche: input.niche, platform: input.platform,
+      tone: input.tone as IdeaTone | undefined, count: input.count,
     });
 
-    const created = [];
-    for (const idea of ideas) {
-      const id = generateId();
-      await execute(
-        `INSERT INTO Idea (id, title, hookPreview, angle, format, niche, platform, tone, status, authorId, createdAt, updatedAt)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, idea.title, idea.hookPreview, idea.angle, idea.format, input.niche, input.platform, input.tone || "educational", "idea", userId, now(), now()]
-      );
-      created.push({
-        id, title: idea.title, hookPreview: idea.hookPreview, angle: idea.angle, format: idea.format,
-        niche: input.niche, platform: input.platform, tone: input.tone || "educational", status: "idea",
-        notes: null, authorId: userId, createdAt: now(), updatedAt: now(),
-      });
-    }
-
+    const created = await Promise.all(
+      ideas.map((idea) =>
+        db.idea.create({
+          data: {
+            title: idea.title, hookPreview: idea.hookPreview, angle: idea.angle, format: idea.format,
+            niche: input.niche, platform: input.platform, tone: input.tone ?? "educational",
+            status: "idea", authorId: userId,
+          },
+        })
+      )
+    );
     return NextResponse.json({ ok: true, ideas: created });
   } catch (err: any) {
     console.error("[ideas POST] error", err);
@@ -62,19 +50,13 @@ export async function POST(req: Request) {
 export async function GET(req: Request) {
   try {
     const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session?.user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    const userId = (session.user as any).id as string;
     const url = new URL(req.url);
     const status = url.searchParams.get("status");
-    let sql = "SELECT * FROM Idea WHERE authorId = ?";
-    const args: any[] = [session.user.id];
-    if (status && ["idea", "filmed", "published", "killed"].includes(status)) {
-      sql += " AND status = ?";
-      args.push(status);
-    }
-    sql += " ORDER BY createdAt DESC LIMIT 200";
-    const ideas = await query(sql, args);
+    const where: any = { authorId: userId };
+    if (status && ["idea", "filmed", "published", "killed"].includes(status)) where.status = status;
+    const ideas = await db.idea.findMany({ where, orderBy: { createdAt: "desc" }, take: 200 });
     return NextResponse.json({ ok: true, ideas });
   } catch (err: any) {
     console.error("[ideas GET] error", err);

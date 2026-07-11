@@ -1,29 +1,24 @@
 import Link from "next/link";
-import { getSession } from "@/lib/auth-edge";
-import { query } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { PenLine, Lightbulb, ImagePlus, ArrowRight, Sparkles, Plus, TrendingUp } from "lucide-react";
 import { ScriptList } from "@/components/app/script-list";
 
-export const runtime = "edge";
-
 export default async function AppDashboard() {
-  const session = await getSession();
-  const user = session?.user;
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
   const userId = user?.id;
 
-  const [scripts, waitlistRows, ideasRows, thumbnailsRows] = await Promise.all([
-    userId ? query("SELECT * FROM Script WHERE authorId = ? ORDER BY createdAt DESC LIMIT 5", [userId]) : [],
-    query("SELECT COUNT(*) as count FROM Waitlist"),
-    userId ? query("SELECT COUNT(*) as count FROM Idea WHERE authorId = ?", [userId]) : [{ count: 0 }],
-    userId ? query("SELECT COUNT(*) as count FROM Thumbnail WHERE userId = ?", [userId]) : [{ count: 0 }],
+  const [scripts, waitlistCount, ideasCount, thumbnailsCount] = await Promise.all([
+    userId ? db.script.findMany({ where: { authorId: userId }, orderBy: { createdAt: "desc" }, take: 5 }) : [],
+    db.waitlist.count(),
+    userId ? db.idea.count({ where: { authorId: userId } }) : 0,
+    userId ? db.thumbnail.count({ where: { userId } }) : 0,
   ]);
 
-  const ideasCount = (ideasRows[0] as any)?.count || 0;
-  const publishedRows = userId ? await query("SELECT COUNT(*) as count FROM Idea WHERE authorId = ? AND status = ?", [userId, "published"]) : [{ count: 0 }];
-  const publishedCount = (publishedRows[0] as any)?.count || 0;
-  const thumbnailsCount = (thumbnailsRows[0] as any)?.count || 0;
-  const waitlistCount = (waitlistRows[0] as any)?.count || 0;
+  const publishedCount = userId ? await db.idea.count({ where: { authorId: userId, status: "published" } }) : 0;
 
   return (
     <div className="px-6 lg:px-10 py-8 max-w-7xl mx-auto">
@@ -33,16 +28,11 @@ export default async function AppDashboard() {
             <span className="h-1.5 w-1.5 rounded-full bg-brand-pink" />
             Dashboard
           </div>
-          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight">
-            Hey {user?.name?.split(" ")[0] ?? "creator"} 👋
-          </h1>
+          <h1 className="mt-2 font-display text-3xl font-bold tracking-tight">Hey {user?.name?.split(" ")[0] ?? "creator"} 👋</h1>
           <p className="mt-1 text-muted-foreground">What are we making today?</p>
         </div>
         <Button asChild className="brand-gradient text-white hover:opacity-90">
-          <Link href="/app/scripts/new">
-            <Plus className="mr-1.5 h-4 w-4" />
-            New script
-          </Link>
+          <Link href="/app/scripts/new"><Plus className="mr-1.5 h-4 w-4" />New script</Link>
         </Button>
       </div>
 

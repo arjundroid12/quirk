@@ -1,15 +1,19 @@
 import Link from "next/link";
-import { getSession } from "@/lib/auth-edge";
-import { query } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { Button } from "@/components/ui/button";
 import { Plus, PenLine, ChevronLeft } from "lucide-react";
 import { ScriptList } from "@/components/app/script-list";
 
-export const runtime = "edge";
-
 export default async function ScriptsListPage() {
-  const session = await getSession();
-  const scripts = await query("SELECT * FROM Script WHERE authorId = ? ORDER BY createdAt DESC LIMIT 100", [session?.user?.id || ""]);
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
+  const scripts = await db.script.findMany({
+    where: { authorId: user?.id },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
 
   return (
     <div className="px-6 lg:px-10 py-8 max-w-5xl mx-auto">

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { LogoMark, Logo } from "@/components/logo";
 import { cn, initials } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -110,10 +111,7 @@ export function AppShell({
             Settings
           </Link>
           <button
-            onClick={async () => {
-              await fetch("/api/auth/signout", { method: "POST" });
-              window.location.href = "/";
-            }}
+            onClick={() => signOut({ callbackUrl: "/" })}
             className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-white transition"
           >
             <LogOut className="h-4 w-4" />

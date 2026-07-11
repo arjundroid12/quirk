@@ -1,13 +1,21 @@
-import { getSession } from "@/lib/auth-edge";
-import { query } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { IdeaEngine } from "@/components/idea-engine/idea-engine";
 
-export const runtime = "edge";
-
 export default async function IdeasPage() {
-  const session = await getSession();
-  const ideas = await query("SELECT * FROM Idea WHERE authorId = ? ORDER BY createdAt DESC LIMIT 200", [session?.user?.id || ""]);
-  const serialized = ideas.map((i: any) => ({ ...i, createdAt: new Date(i.createdAt).toISOString(), updatedAt: new Date(i.updatedAt).toISOString() }));
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
+  const ideas = await db.idea.findMany({
+    where: { authorId: user?.id },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+  });
+  const serialized = ideas.map((i) => ({
+    ...i,
+    createdAt: i.createdAt.toISOString(),
+    updatedAt: i.updatedAt.toISOString(),
+  }));
   return (
     <div className="px-6 lg:px-10 py-8 max-w-7xl mx-auto">
       <div className="mb-8">

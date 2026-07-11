@@ -2,8 +2,6 @@ import Link from "next/link";
 import { ChevronLeft } from "lucide-react";
 import { NewScriptForm } from "@/components/script-studio/new-script-form";
 
-export const runtime = "edge";
-
 export default function NewScriptPage() {
   return (
     <div className="px-6 lg:px-10 py-8 max-w-4xl mx-auto">

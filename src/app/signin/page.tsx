@@ -1,17 +1,16 @@
 import { redirect } from "next/navigation";
-import { getSession } from "@/lib/auth-edge";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { Logo } from "@/components/logo";
 import { SignInCard } from "@/components/landing/signin-card";
 import Link from "next/link";
-
-export const runtime = "edge";
 
 export default async function SignInPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string; error?: string; check?: string }>;
 }) {
-  const session = await getSession();
+  const session = await getServerSession(authOptions);
   const sp = await searchParams;
   const next = sp.next ?? "/app";
 

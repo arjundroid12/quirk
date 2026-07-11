@@ -1,6 +1,5 @@
 import { ImageResponse } from "next/og";
 
-export const runtime = "edge";
 export const alt = "QUIRK — AI toolkit for content creators";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
@@ -63,6 +62,8 @@ export default async function OGImage() {
         <div style={{ display: "flex", flexDirection: "column", gap: 20, position: "relative" }}>
           <div
             style={{
+              display: "flex",
+              flexDirection: "column",
               fontSize: 84,
               fontWeight: 800,
               lineHeight: 1.05,
@@ -70,9 +71,8 @@ export default async function OGImage() {
               maxWidth: 1000,
             }}
           >
-            Find your quirk.
-            <br />
-            Ship it.
+            <div>Find your quirk.</div>
+            <div>Ship it.</div>
           </div>
         </div>
 

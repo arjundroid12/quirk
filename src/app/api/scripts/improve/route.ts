@@ -1,10 +1,7 @@
 import { NextResponse } from "next/server";
-import { z } from "zod";
-import { getSession } from "@/lib/auth-edge";
+import { getSession } from "@/lib/session";
 import { improveScriptSection, type ScriptGenInput } from "@/lib/zai";
-
-export const runtime = "edge";
-export const dynamic = "force-dynamic";
+import { z } from "zod";
 
 const ImproveSchema = z.object({
   section: z.enum(["hook", "body", "cta"]),
@@ -18,14 +15,10 @@ const ImproveSchema = z.object({
 export async function POST(req: Request) {
   try {
     const session = await getSession();
-    if (!session?.user) {
-      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session?.user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     const body = await req.json();
     const parsed = ImproveSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json({ ok: false, error: "Invalid input" }, { status: 400 });
-    }
+    if (!parsed.success) return NextResponse.json({ ok: false, error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
     const { section, current, niche, platform, tone, instruction } = parsed.data;
     const improved = await improveScriptSection({
       section, current, niche,

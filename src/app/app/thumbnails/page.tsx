@@ -1,26 +1,28 @@
-import { getSession } from "@/lib/auth-edge";
-import { query } from "@/lib/db";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
+import { db } from "@/lib/db";
 import { ThumbnailTester } from "@/components/thumbnail-tester/thumbnail-tester";
 
-export const runtime = "edge";
-
 export default async function ThumbnailsPage() {
-  const session = await getSession();
-  const thumbnails = await query("SELECT * FROM Thumbnail WHERE userId = ? ORDER BY createdAt DESC LIMIT 100", [session?.user?.id || ""]);
-
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
+  const thumbnails = await db.thumbnail.findMany({
+    where: { userId: user?.id },
+    orderBy: { createdAt: "desc" },
+    take: 100,
+  });
   const batches: any[] = [];
   const batchMap = new Map<string, number>();
   for (const t of thumbnails) {
-    const idx = batchMap.get((t as any).batchId);
-    const serialized = { ...(t as any), createdAt: new Date((t as any).createdAt).toISOString() };
+    const idx = batchMap.get(t.batchId);
+    const serialized = { ...t, createdAt: t.createdAt.toISOString() };
     if (idx === undefined) {
-      batchMap.set((t as any).batchId, batches.length);
-      batches.push({ batchId: (t as any).batchId, createdAt: serialized.createdAt, thumbnails: [serialized] });
+      batchMap.set(t.batchId, batches.length);
+      batches.push({ batchId: t.batchId, createdAt: serialized.createdAt, thumbnails: [serialized] });
     } else {
       batches[idx].thumbnails.push(serialized);
     }
   }
-
   return (
     <div className="px-6 lg:px-10 py-8 max-w-7xl mx-auto">
       <div className="mb-8">

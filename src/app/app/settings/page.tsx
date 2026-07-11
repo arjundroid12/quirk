@@ -1,14 +1,12 @@
-import { getSession } from "@/lib/auth-edge";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Mail } from "lucide-react";
 
-export const runtime = "edge";
-
 export default async function SettingsPage() {
-  const session = await getSession();
-  const user = session?.user;
-
+  const session = await getServerSession(authOptions);
+  const user = session?.user as any;
   return (
     <div className="px-6 lg:px-10 py-8 max-w-3xl mx-auto">
       <div className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-brand mb-3">
