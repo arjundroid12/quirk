@@ -103,7 +103,7 @@ export function Hero() {
               src="/art/hero-illustration.png"
               alt=""
               aria-hidden="true"
-              className="absolute -top-16 -right-12 -z-10 w-80 h-80 object-contain opacity-60 pointer-events-none select-none"
+              className="absolute -top-16 -right-12 z-0 w-80 h-80 object-contain opacity-60 pointer-events-none select-none"
               style={{ filter: "blur(2px)" }}
             />
             {/* Floating blob shapes */}
@@ -111,9 +111,9 @@ export function Hero() {
               src="/art/blob-shapes.png"
               alt=""
               aria-hidden="true"
-              className="absolute -bottom-20 -left-16 -z-10 w-64 h-64 object-contain opacity-40 pointer-events-none select-none"
+              className="absolute -bottom-20 -left-16 z-0 w-64 h-64 object-contain opacity-40 pointer-events-none select-none"
             />
-            <div className="relative rounded-3xl border border-border bg-card p-3 shadow-2xl shadow-brand/10 glow-brand">
+            <div className="relative z-10 rounded-3xl border border-border bg-card p-3 shadow-2xl shadow-brand/10 glow-brand">
               {/* Mock browser chrome */}
               <div className="flex items-center gap-1.5 px-3 py-2">
                 <div className="h-2.5 w-2.5 rounded-full bg-red-400/70" />
