@@ -80,12 +80,10 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
 
   const body = {
     requests: statements.map((stmt) => ({
-      request: {
-        type: "execute",
-        stmt: {
-          sql: stmt.sql,
-          args: stmt.args.map(toTursoArg),
-        },
+      type: "execute",
+      stmt: {
+        sql: stmt.sql,
+        args: stmt.args.map(toTursoArg),
       },
     })),
   };
