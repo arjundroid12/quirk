@@ -1,17 +1,10 @@
-import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
+import { getToken } from "next-auth/jwt";
+import type { NextRequest } from "next/server";
 
 // Custom middleware: API routes get 401 JSON, pages get redirected to signin
-export default withAuth({
-  pages: { signIn: "/signin" },
-  callbacks: {
-    authorized: ({ token }) => !!token,
-  },
-});
-
-// Wrap with custom handler for API routes
-export function middleware(req: any) {
-  const token = (req as any).nextauth?.token;
+export async function middleware(req: NextRequest) {
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
   const isAuthenticated = !!token;
 
   if (isAuthenticated) {
