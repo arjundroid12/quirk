@@ -49,26 +49,23 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* QUIRK theme — Fly.io-inspired pastel gradient + star particles */
+/* QUIRK Light (cream) theme */
 :root {
   --radius: 0.75rem;
 
-  /* Brand */
-  --brand: #7C3AED;          /* deep purple */
+  --brand: #7C3AED;
   --brand-foreground: #FFFFFF;
-  --brand-pink: #EC4899;     /* electric pink */
-  --brand-cream: #FAFAF7;    /* cream */
-  --brand-dark: #0F0F1A;     /* near-black */
+  --brand-pink: #EC4899;
+  --brand-cream: #FAFAF7;
+  --brand-dark: #0F0F1A;
 
-  /* Surfaces — translucent for glass effect over gradient */
-  --background: transparent;
+  --background: #FAFAF7;
   --foreground: #0F0F1A;
-  --card: rgba(255, 255, 255, 0.72);
+  --card: #FFFFFF;
   --card-foreground: #0F0F1A;
   --popover: #FFFFFF;
   --popover-foreground: #0F0F1A;
 
-  /* Brand as primary */
   --primary: #7C3AED;
   --primary-foreground: #FFFFFF;
   --secondary: #F1ECFE;
@@ -104,62 +101,15 @@
     border-color: var(--border);
   }
   body {
-    /* Full-page 2D illustration background (Fly.io-style) */
-    background-color: #FAFAF7;
-    background-image: url("/art/bg-quirk-flystyle.png");
-    background-size: cover;
-    background-position: center top;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
+    background-color: var(--background);
     color: var(--foreground);
     font-feature-settings: "ss01", "cv11";
-    min-height: 100vh;
   }
   ::selection {
     background-color: rgba(124, 58, 237, 0.25);
   }
 }
 
-/* Star particle background — CSS-only sparkles scattered across the page */
-body::before {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  /* Star particles using radial gradients */
-  background-image:
-    radial-gradient(3px 3px at 10% 20%, rgba(196, 181, 253, 0.9), transparent),
-    radial-gradient(2px 2px at 25% 60%, rgba(244, 114, 182, 0.8), transparent),
-    radial-gradient(3px 3px at 50% 15%, rgba(196, 181, 253, 0.7), transparent),
-    radial-gradient(2px 2px at 70% 80%, rgba(56, 189, 248, 0.7), transparent),
-    radial-gradient(3px 3px at 85% 30%, rgba(196, 181, 253, 0.8), transparent),
-    radial-gradient(2px 2px at 15% 75%, rgba(244, 114, 182, 0.7), transparent),
-    radial-gradient(2px 2px at 40% 90%, rgba(56, 189, 248, 0.6), transparent),
-    radial-gradient(3px 3px at 60% 45%, rgba(196, 181, 253, 0.7), transparent),
-    radial-gradient(2px 2px at 90% 65%, rgba(244, 114, 182, 0.6), transparent),
-    radial-gradient(2px 2px at 30% 40%, rgba(167, 139, 250, 0.7), transparent),
-    radial-gradient(3px 3px at 75% 10%, rgba(56, 189, 248, 0.6), transparent),
-    radial-gradient(2px 2px at 5% 50%, rgba(196, 181, 253, 0.6), transparent);
-  animation: twinkle 4s ease-in-out infinite alternate;
-}
-
-/* Star particles — keep subtle, illustration has its own */
-@keyframes twinkle {
-  0% { opacity: 0.3; }
-  100% { opacity: 0.6; }
-}
-
-/* Ensure content sits above the particle layer */
-#__next, body > div:first-child {
-  position: relative;
-  z-index: 1;
-}
-
-/* Custom utility classes for QUIRK */
 @utility brand-gradient {
   background-image: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
 }
@@ -172,9 +122,9 @@ body::before {
 }
 
 @utility glass {
-  background-color: rgba(255, 255, 255, 0.72);
-  backdrop-filter: blur(20px) saturate(150%);
-  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  background-color: rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 
 @utility glass-dark {
@@ -183,7 +133,6 @@ body::before {
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
 
-/* Custom scrollbar */
 .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 .custom-scroll::-webkit-scrollbar-thumb {
@@ -194,24 +143,15 @@ body::before {
   background-color: rgba(124, 58, 237, 0.4);
 }
 
-/* Subtle grid pattern for hero */
 @utility bg-grid {
   background-image:
-    linear-gradient(to right, rgba(124, 58, 237, 0.04) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
+    linear-gradient(to right, rgba(124, 58, 237, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
-/* Glow — softer for light theme */
 @utility glow-brand {
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.1),
-              0 18px 60px -20px rgba(124, 58, 237, 0.3),
-              0 8px 30px -10px rgba(236, 72, 153, 0.15);
-}
-
-/* Soft pastel glow orbs for hero sections */
-@utility glow-pastel {
-  box-shadow:
-    0 0 80px -10px rgba(252, 231, 243, 0.8),
-    0 0 120px -20px rgba(224, 242, 254, 0.6);
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.15),
+              0 18px 60px -20px rgba(124, 58, 237, 0.45),
+              0 8px 30px -10px rgba(236, 72, 153, 0.25);
 }
