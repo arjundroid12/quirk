@@ -91,13 +91,28 @@ export function Hero() {
             </motion.div>
           </div>
 
-          {/* Right: product mockup */}
+          {/* Right: product mockup with artwork */}
           <motion.div
             initial={{ opacity: 0, y: 24, rotateX: 8 }}
             animate={{ opacity: 1, y: 0, rotateX: 0 }}
             transition={{ duration: 0.7, delay: 0.25 }}
             className="relative"
           >
+            {/* Floating artwork — Fly.io-style illustration behind the mockup */}
+            <img
+              src="/art/hero-illustration.png"
+              alt=""
+              aria-hidden="true"
+              className="absolute -top-16 -right-12 -z-10 w-80 h-80 object-contain opacity-60 pointer-events-none select-none"
+              style={{ filter: "blur(2px)" }}
+            />
+            {/* Floating blob shapes */}
+            <img
+              src="/art/blob-shapes.png"
+              alt=""
+              aria-hidden="true"
+              className="absolute -bottom-20 -left-16 -z-10 w-64 h-64 object-contain opacity-40 pointer-events-none select-none"
+            />
             <div className="relative rounded-3xl border border-border bg-card p-3 shadow-2xl shadow-brand/10 glow-brand">
               {/* Mock browser chrome */}
               <div className="flex items-center gap-1.5 px-3 py-2">
