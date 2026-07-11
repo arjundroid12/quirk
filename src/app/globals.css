@@ -49,23 +49,19 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* QUIRK Light (cream) theme */
 :root {
   --radius: 0.75rem;
-
   --brand: #7C3AED;
   --brand-foreground: #FFFFFF;
   --brand-pink: #EC4899;
   --brand-cream: #FAFAF7;
   --brand-dark: #0F0F1A;
-
   --background: #FAFAF7;
   --foreground: #0F0F1A;
   --card: #FFFFFF;
   --card-foreground: #0F0F1A;
   --popover: #FFFFFF;
   --popover-foreground: #0F0F1A;
-
   --primary: #7C3AED;
   --primary-foreground: #FFFFFF;
   --secondary: #F1ECFE;
@@ -75,17 +71,14 @@
   --accent: #FCE7F3;
   --accent-foreground: #831843;
   --destructive: #DC2626;
-
   --border: rgba(124, 58, 237, 0.12);
   --input: rgba(124, 58, 237, 0.12);
   --ring: #7C3AED;
-
   --chart-1: #A78BFA;
   --chart-2: #F472B6;
   --chart-3: #FBBF24;
   --chart-4: #34D399;
   --chart-5: #38BDF8;
-
   --sidebar: #060610;
   --sidebar-foreground: #FAFAF7;
   --sidebar-primary: #7C3AED;
@@ -97,61 +90,70 @@
 }
 
 @layer base {
-  * {
-    border-color: var(--border);
-  }
+  * { border-color: var(--border); }
   body {
-    background-color: var(--background);
+    background-color: #FAFAF7;
+    background-image:
+      radial-gradient(ellipse 90% 70% at 15% 5%, rgba(252, 165, 165, 0.25) 0%, transparent 45%),
+      radial-gradient(ellipse 90% 70% at 85% 95%, rgba(96, 165, 250, 0.22) 0%, transparent 45%),
+      radial-gradient(ellipse 70% 50% at 50% 40%, rgba(196, 181, 253, 0.28) 0%, transparent 50%);
+    background-attachment: fixed;
     color: var(--foreground);
     font-feature-settings: "ss01", "cv11";
+    min-height: 100vh;
   }
-  ::selection {
-    background-color: rgba(124, 58, 237, 0.25);
-  }
+  ::selection { background-color: rgba(124, 58, 237, 0.25); }
 }
 
-@utility brand-gradient {
-  background-image: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
+body::before {
+  content: "";
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(2px 2px at 10% 20%, rgba(196, 181, 253, 0.7), transparent),
+    radial-gradient(1.5px 1.5px at 25% 60%, rgba(244, 114, 182, 0.6), transparent),
+    radial-gradient(2px 2px at 50% 15%, rgba(196, 181, 253, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 70% 80%, rgba(56, 189, 248, 0.5), transparent),
+    radial-gradient(2px 2px at 85% 30%, rgba(196, 181, 253, 0.6), transparent),
+    radial-gradient(1px 1px at 15% 75%, rgba(244, 114, 182, 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 40% 90%, rgba(56, 189, 248, 0.4), transparent),
+    radial-gradient(2px 2px at 60% 45%, rgba(196, 181, 253, 0.5), transparent);
+  animation: twinkle 4s ease-in-out infinite alternate;
 }
 
+@keyframes twinkle {
+  0% { opacity: 0.4; }
+  100% { opacity: 0.8; }
+}
+
+#__next, body > div:first-child { position: relative; z-index: 1; }
+
+@utility brand-gradient { background-image: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%); }
 @utility brand-gradient-text {
   background-image: linear-gradient(135deg, #7C3AED 0%, #EC4899 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  -webkit-background-clip: text; background-clip: text; color: transparent;
 }
-
 @utility glass {
-  background-color: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  background-color: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
 }
-
 @utility glass-dark {
   background-color: rgba(15, 15, 26, 0.65);
   backdrop-filter: blur(14px) saturate(140%);
   -webkit-backdrop-filter: blur(14px) saturate(140%);
 }
-
 .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .custom-scroll::-webkit-scrollbar-track { background: transparent; }
-.custom-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(124, 58, 237, 0.2);
-  border-radius: 9999px;
-}
-.custom-scroll::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(124, 58, 237, 0.4);
-}
-
+.custom-scroll::-webkit-scrollbar-thumb { background-color: rgba(124, 58, 237, 0.2); border-radius: 9999px; }
+.custom-scroll::-webkit-scrollbar-thumb:hover { background-color: rgba(124, 58, 237, 0.4); }
 @utility bg-grid {
-  background-image:
-    linear-gradient(to right, rgba(124, 58, 237, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+  background-image: linear-gradient(to right, rgba(124, 58, 237, 0.04) 1px, transparent 1px), linear-gradient(to bottom, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
   background-size: 56px 56px;
 }
-
 @utility glow-brand {
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.15),
-              0 18px 60px -20px rgba(124, 58, 237, 0.45),
-              0 8px 30px -10px rgba(236, 72, 153, 0.25);
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.1), 0 18px 60px -20px rgba(124, 58, 237, 0.3), 0 8px 30px -10px rgba(236, 72, 153, 0.15);
 }
