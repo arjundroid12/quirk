@@ -2,16 +2,38 @@ import ZAI from "z-ai-web-dev-sdk";
 
 /**
  * Z.AI SDK singleton — used server-side only.
- * Free in this environment, GLM-4.6 model, no API key needed.
- * Config is auto-loaded from /etc/.z-ai-config in the sandbox.
+ *
+ * In the sandbox: config auto-loads from /etc/.z-ai-config.
+ * On Vercel/production: config is provided via env vars (ZAI_BASE_URL, ZAI_API_KEY, etc.)
  */
 
 let _zai: any = null;
 
 export async function getZAI() {
   if (_zai) return _zai;
-  _zai = await ZAI.create();
-  return _zai;
+
+  // Try loading from config file first (sandbox)
+  try {
+    _zai = await ZAI.create();
+    return _zai;
+  } catch {
+    // Config file not found — use env vars (Vercel production)
+    const config = {
+      baseUrl: process.env.ZAI_BASE_URL || "https://internal-api.z.ai/v1",
+      apiKey: process.env.ZAI_API_KEY || "Z.ai",
+      chatId: process.env.ZAI_CHAT_ID,
+      userId: process.env.ZAI_USER_ID,
+      token: process.env.ZAI_TOKEN,
+    };
+
+    if (!config.baseUrl || !config.apiKey) {
+      throw new Error("Z.AI config not available. Set ZAI_BASE_URL + ZAI_API_KEY env vars.");
+    }
+
+    // Create ZAI instance directly (bypasses loadConfig)
+    _zai = new (ZAI as any)(config);
+    return _zai;
+  }
 }
 
 /**
