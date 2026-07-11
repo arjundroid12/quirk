@@ -1,44 +1,87 @@
-import ZAI from "z-ai-web-dev-sdk";
-
 /**
- * Z.AI SDK singleton — used server-side only.
+ * QUIRK AI Library — direct REST API calls (no SDK).
  *
- * In the sandbox: config auto-loads from /etc/.z-ai-config.
- * On Vercel/production: config is provided via env vars (ZAI_BASE_URL, ZAI_API_KEY, etc.)
+ * Text AI (Script Studio, Idea Engine): Z.AI public API (glm-4.5-flash, free)
+ * Vision AI (Thumbnail Tester): Groq API (Llama 4 Scout, free)
+ *
+ * Both called via fetch() — works on Vercel, sandbox, anywhere.
  */
 
-let _zai: any = null;
+const ZAI_URL = "https://api.z.ai/api/paas/v4/chat/completions";
+const ZAI_KEY = process.env.ZAI_API_KEY || "";
+const ZAI_MODEL = "glm-4.5-flash";
 
-export async function getZAI() {
-  if (_zai) return _zai;
+const GROQ_URL = "https://api.groq.com/openai/v1/chat/completions";
+const GROQ_KEY = process.env.GROQ_API_KEY || "";
+const GROQ_VISION_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 
-  // Try loading from config file first (sandbox)
-  try {
-    _zai = await ZAI.create();
-    return _zai;
-  } catch {
-    // Config file not found — use env vars (Vercel production)
-    const config = {
-      baseUrl: process.env.ZAI_BASE_URL || "https://internal-api.z.ai/v1",
-      apiKey: process.env.ZAI_API_KEY || "Z.ai",
-      chatId: process.env.ZAI_CHAT_ID,
-      userId: process.env.ZAI_USER_ID,
-      token: process.env.ZAI_TOKEN,
-    };
+/** Call Z.AI text API. glm-4.5-flash is a reasoning model — needs max_tokens >= 4000. */
+async function callZAI(messages: Array<{ role: string; content: string }>, maxTokens: number = 4000): Promise<string> {
+  if (!ZAI_KEY) throw new Error("ZAI_API_KEY not set");
 
-    if (!config.baseUrl || !config.apiKey) {
-      throw new Error("Z.AI config not available. Set ZAI_BASE_URL + ZAI_API_KEY env vars.");
-    }
+  const res = await fetch(ZAI_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${ZAI_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: ZAI_MODEL,
+      messages,
+      max_tokens: Math.max(maxTokens, 4000),
+      temperature: 0.85,
+    }),
+  });
 
-    // Create ZAI instance directly (bypasses loadConfig)
-    _zai = new (ZAI as any)(config);
-    return _zai;
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`Z.AI API ${res.status}: ${text.slice(0, 200)}`);
   }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? "";
 }
 
-/**
- * Generate a content script tailored to platform + niche + tone.
- */
+/** Call Groq vision API for thumbnail analysis. */
+async function callGroqVision(systemPrompt: string, userPrompt: string, imageUrl: string): Promise<string> {
+  if (!GROQ_KEY) throw new Error("GROQ_API_KEY not set");
+
+  const res = await fetch(GROQ_URL, {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${GROQ_KEY}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: GROQ_VISION_MODEL,
+      messages: [
+        { role: "system", content: systemPrompt },
+        {
+          role: "user",
+          content: [
+            { type: "text", text: userPrompt },
+            { type: "image_url", image_url: { url: imageUrl } },
+          ],
+        },
+      ],
+      max_tokens: 800,
+      temperature: 0.7,
+    }),
+  });
+
+  if (!res.ok) {
+    const text = await res.text().catch(() => res.statusText);
+    throw new Error(`Groq API ${res.status}: ${text.slice(0, 200)}`);
+  }
+
+  const data = await res.json();
+  return data.choices?.[0]?.message?.content ?? "";
+}
+
+// =============================================================================
+// Script Studio
+// =============================================================================
+
 export interface ScriptGenInput {
   niche: string;
   platform: "reels" | "shorts" | "longform" | "tiktok" | "carousel";
@@ -59,55 +102,29 @@ export interface GeneratedScript {
 }
 
 const PLATFORM_SPEC: Record<ScriptGenInput["platform"], string> = {
-  reels:
-    "Instagram Reels, vertical 9:16, 15-90 seconds, fast cuts, text-on-screen heavy, strong hook in first 1.5 seconds",
-  shorts:
-    "YouTube Shorts, vertical 9:16, 15-60 seconds, search-friendly title, optimized for the YouTube algorithm with a rewatch loop",
-  tiktok:
-    "TikTok, vertical 9:16, 15-180 seconds, native-feeling, trend-aware, uses TikTok-native patterns (POV, stitch bait, sound-driven)",
-  longform:
-    "YouTube long-form video, 16:9, 5-12 minutes, structured intro/problem/solution/payoff, retention curves in mind",
-  carousel:
-    "Instagram carousel, 5-8 slides, each slide has 1 idea + 1 visual cue, swipe-bait first slide",
+  reels: "Instagram Reels, vertical 9:16, 15-90 seconds, fast cuts, text-on-screen heavy, strong hook in first 1.5 seconds",
+  shorts: "YouTube Shorts, vertical 9:16, 15-60 seconds, search-friendly title, optimized for the YouTube algorithm with a rewatch loop",
+  tiktok: "TikTok, vertical 9:16, 15-180 seconds, native-feeling, trend-aware, uses TikTok-native patterns (POV, stitch bait, sound-driven)",
+  longform: "YouTube long-form video, 16:9, 5-12 minutes, structured intro/problem/solution/payoff, retention curves in mind",
+  carousel: "Instagram carousel, 5-8 slides, each slide has 1 idea + 1 visual cue, swipe-bait first slide",
 };
 
 const TONE_SPEC: Record<ScriptGenInput["tone"], string> = {
-  casual:
-    "casual, conversational, like texting a friend — first person, contractions, light humor",
-  hype:
-    "high energy, urgent, punchy — short sentences, exclamation points, builds momentum",
-  educational:
-    "clear, structured, value-first — explains the why before the how, no fluff",
-  storytelling:
-    "narrative-driven, scene-setting, sensory details — opens with a moment, builds tension, resolves",
-  authoritative:
-    "confident, expert, evidence-backed — citations where useful, definitive claims, no hedging",
+  casual: "casual, conversational, like texting a friend — first person, contractions, light humor",
+  hype: "high energy, urgent, punchy — short sentences, exclamation points, builds momentum",
+  educational: "clear, structured, value-first — explains the why before the how, no fluff",
+  storytelling: "narrative-driven, scene-setting, sensory details — opens with a moment, builds tension, resolves",
+  authoritative: "confident, expert, evidence-backed — citations where useful, definitive claims, no hedging",
 };
 
-export async function generateScript(
-  input: ScriptGenInput
-): Promise<GeneratedScript> {
-  const zai = await getZAI();
-
+export async function generateScript(input: ScriptGenInput): Promise<GeneratedScript> {
   const platformSpec = PLATFORM_SPEC[input.platform];
   const toneSpec = TONE_SPEC[input.tone];
-  const durationHint = input.durationSec
-    ? `Aim for ~${input.durationSec} seconds spoken.`
-    : "";
+  const durationHint = input.durationSec ? `Aim for ~${input.durationSec} seconds spoken.` : "";
   const topicHint = input.topic ? `Topic: ${input.topic}.` : "Suggest a topic that fits this niche.";
-  const ctaHint = input.cta
-    ? `Use this CTA: ${input.cta}.`
-    : "Suggest a natural CTA that fits the content (follow, save, comment, link in bio, etc.).";
+  const ctaHint = input.cta ? `Use this CTA: ${input.cta}.` : "Suggest a natural CTA that fits the content (follow, save, comment, link in bio, etc.).";
 
-  const systemPrompt = `You are QUIRK Script Studio — a world-class short-form and long-form content writer who has written for top UGC creators, YouTubers with millions of subscribers, and viral TikTok/Reels accounts.
-
-You understand:
-- Hook psychology (the first 1-3 seconds are everything)
-- Platform-native formats and rhythms
-- Retention curves (where viewers drop off and how to keep them)
-- Native CTA patterns that don't feel salesy
-
-You always output STRICT JSON. No markdown, no prose outside JSON.`;
+  const systemPrompt = `You are QUIRK Script Studio — a world-class short-form and long-form content writer. You always output STRICT JSON. No markdown, no prose outside JSON.`;
 
   const userPrompt = `Write a content script.
 
@@ -131,28 +148,17 @@ Return JSON with EXACTLY these keys:
 
 Output ONLY the JSON object. No prose. No \`\`\`json fences.`;
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    temperature: 0.85,
-    max_tokens: 1400,
-  });
+  const raw = await callZAI([
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ]);
 
-  const raw = completion.choices?.[0]?.message?.content ?? "";
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
-  // Try to parse JSON robustly (strip any accidental markdown fences)
   let parsed: GeneratedScript;
-  const cleaned = raw
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
-
   try {
     parsed = JSON.parse(cleaned);
-  } catch (err) {
-    // Try to extract first {...} block
+  } catch {
     const match = cleaned.match(/\{[\s\S]*\}/);
     if (match) {
       parsed = JSON.parse(match[0]);
@@ -161,7 +167,6 @@ Output ONLY the JSON object. No prose. No \`\`\`json fences.`;
     }
   }
 
-  // Ensure required keys exist
   if (!parsed.title || !parsed.hook || !parsed.body) {
     throw new Error("Z.AI returned incomplete script");
   }
@@ -173,9 +178,6 @@ Output ONLY the JSON object. No prose. No \`\`\`json fences.`;
   return parsed;
 }
 
-/**
- * Improve / rewrite a single section of a script (hook, body, cta).
- */
 export async function improveScriptSection(args: {
   section: "hook" | "body" | "cta";
   current: string;
@@ -184,14 +186,13 @@ export async function improveScriptSection(args: {
   tone: ScriptGenInput["tone"];
   instruction?: string;
 }): Promise<string> {
-  const zai = await getZAI();
   const sectionSpec = {
     hook: "the opening 1-3 seconds — must stop the scroll, max 25 words",
     body: "the main script body — natural paragraph breaks, scene cues in [brackets]",
     cta: "the closing call to action — 1-2 sentences, on-voice, not salesy",
   }[args.section];
 
-  const systemPrompt = `You are QUIRK Script Studio — a world-class content writer. You rewrite script sections to be sharper, more native, and more clickable. You output ONLY the rewritten section text — no preamble, no JSON, no markdown.`;
+  const systemPrompt = `You are QUIRK Script Studio — a world-class content writer. You output ONLY the rewritten section text — no preamble, no JSON, no markdown.`;
 
   const userPrompt = `Rewrite ${args.section} for a ${args.platform} video.
 Niche: ${args.niche}
@@ -206,22 +207,18 @@ ${args.current}
 
 Output ONLY the rewritten ${args.section} text. No quotes, no headers, no markdown.`;
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    temperature: 0.9,
-    max_tokens: args.section === "body" ? 1000 : 300,
-  });
+  const out = await callZAI([
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ]);
 
-  const out = completion.choices?.[0]?.message?.content ?? "";
   return out.trim().replace(/^["']|["']$/g, "");
 }
 
-/**
- * Generate content ideas for a creator's niche.
- */
+// =============================================================================
+// Idea Engine
+// =============================================================================
+
 export type IdeaTone = "educational" | "entertaining" | "inspirational" | "controversial";
 
 export async function generateIdeas(args: {
@@ -229,15 +226,7 @@ export async function generateIdeas(args: {
   platform: ScriptGenInput["platform"];
   tone?: IdeaTone;
   count?: number;
-}): Promise<
-  Array<{
-    title: string;
-    angle: string;
-    hookPreview: string;
-    format: string;
-  }>
-> {
-  const zai = await getZAI();
+}): Promise<Array<{ title: string; angle: string; hookPreview: string; format: string }>> {
   const count = args.count ?? 8;
 
   const toneSpec: Record<IdeaTone, string> = {
@@ -251,44 +240,37 @@ export async function generateIdeas(args: {
     ? `Tone: ${args.tone} — ${toneSpec[args.tone]}.`
     : "Vary the tone across ideas (mix educational, entertaining, inspirational, and controversial).";
 
-  const systemPrompt = `You are QUIRK Idea Engine — you generate scroll-stopping content ideas for creators. You think like a strategist who has worked with top UGC creators, YouTubers, and TikTok creators with millions of followers. You understand trend cycles, platform-native formats, and what makes a hook stop the scroll. You always output STRICT JSON.`;
+  const systemPrompt = `You are QUIRK Idea Engine — you generate scroll-stopping content ideas for creators. You always output STRICT JSON.`;
 
   const userPrompt = `Generate ${count} content ideas for a creator in the "${args.niche}" niche, optimized for ${args.platform}.
 
 ${toneLine}
 
-Each idea should be DIFFERENT in format and angle — no two ideas should feel like variations of the same concept. Mix formats: POV, listicle, tutorial, story time, myth bust, comparison, behind the scenes, reaction, hot take, day in the life, before/after, etc.
+Each idea should be DIFFERENT in format and angle. Mix formats: POV, listicle, tutorial, story time, myth bust, comparison, behind the scenes, reaction, hot take, day in the life, before/after, etc.
 
 Return JSON: an array of EXACTLY ${count} objects, each:
 {
-  "title": "string — 6-12 words, scroll-stopping idea title (no clickbait, just genuinely interesting)",
+  "title": "string — 6-12 words, scroll-stopping idea title",
   "angle": "string — 1 sentence explaining why this idea works for this audience right now",
-  "hookPreview": "string — the opening 1-2 seconds, in the creator's first-person voice, max 20 words, must stop the scroll",
-  "format": "string — content format from this list: 'POV' | 'listicle' | 'tutorial' | 'story time' | 'myth bust' | 'comparison' | 'behind the scenes' | 'reaction' | 'hot take' | 'day in the life' | 'before/after'"
+  "hookPreview": "string — the opening 1-2 seconds, in the creator's first-person voice, max 20 words",
+  "format": "string — content format: 'POV' | 'listicle' | 'tutorial' | 'story time' | 'myth bust' | 'comparison' | 'behind the scenes' | 'reaction' | 'hot take' | 'day in the life' | 'before/after'"
 }
 
 Output ONLY the JSON array. No markdown fences, no prose.`;
 
-  const completion = await zai.chat.completions.create({
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt },
-    ],
-    temperature: 0.95,
-    max_tokens: 1800,
-  });
+  const raw = await callZAI([
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ]);
 
-  const raw = (completion.choices?.[0]?.message?.content ?? "")
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
   let parsed: any[];
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(cleaned);
     if (!Array.isArray(parsed)) throw new Error("not array");
   } catch {
-    const match = raw.match(/\[[\s\S]*\]/);
+    const match = cleaned.match(/\[[\s\S]*\]/);
     if (match) {
       parsed = JSON.parse(match[0]);
     } else {
@@ -296,7 +278,6 @@ Output ONLY the JSON array. No markdown fences, no prose.`;
     }
   }
 
-  // Sanitize + cap
   return parsed.slice(0, count).map((p) => ({
     title: String(p.title ?? "").slice(0, 200),
     angle: String(p.angle ?? "").slice(0, 400),
@@ -305,11 +286,10 @@ Output ONLY the JSON array. No markdown fences, no prose.`;
   }));
 }
 
-/**
- * Analyze a thumbnail image via Z.AI vision model.
- * Scores: composition, emotion, text legibility (each 0-100), predicted CTR (0-5%).
- * Returns reasoning + an overall score.
- */
+// =============================================================================
+// Thumbnail Tester
+// =============================================================================
+
 export interface ThumbnailAnalysis {
   composition: number;
   emotion: number;
@@ -324,22 +304,10 @@ export async function analyzeThumbnail(args: {
   niche?: string;
   platform?: string;
 }): Promise<ThumbnailAnalysis> {
-  const zai = await getZAI();
-
-  const systemPrompt = `You are QUIRK Thumbnail Tester — an expert YouTube/TikTok/Reels thumbnail strategist. You've designed thumbnails for channels with millions of subscribers. You understand click-through rate psychology, visual hierarchy, emotion-driven clicks, and what makes a thumbnail stop the scroll.
-
-You analyze thumbnails and score them on 4 dimensions:
-- composition (0-100): visual balance, rule of thirds, focal point clarity, no clutter
-- emotion (0-100): facial expression intensity, emotional hook, viewer curiosity trigger
-- textLegibility (0-100): text size, contrast, readability at small sizes, no overlap with subject
-- ctr (0-5.0): predicted click-through rate percentage (e.g. 4.2 = 4.2% CTR)
-
-You ALWAYS output STRICT JSON. No markdown, no prose outside JSON.`;
+  const systemPrompt = `You are QUIRK Thumbnail Tester — an expert thumbnail strategist. You analyze thumbnails and score them on 4 dimensions: composition (0-100), emotion (0-100), textLegibility (0-100), ctr (0-5.0). You ALWAYS output STRICT JSON. No markdown, no prose outside JSON.`;
 
   const nicheLine = args.niche ? `The creator's niche is "${args.niche}".` : "";
-  const platformLine = args.platform
-    ? `The thumbnail is for ${args.platform}.`
-    : "The thumbnail is for a short-form video platform (Reels/Shorts/TikTok).";
+  const platformLine = args.platform ? `The thumbnail is for ${args.platform}.` : "The thumbnail is for a short-form video platform.";
 
   const userPrompt = `Analyze this thumbnail. ${platformLine} ${nicheLine}
 
@@ -349,42 +317,24 @@ Return JSON with EXACTLY these keys:
   "emotion": <number 0-100>,
   "textLegibility": <number 0-100>,
   "ctr": <number 0-5.0>,
-  "reasoning": "<2-3 sentences explaining the scores, citing specific elements in the image. Mention what's working AND what could be improved.>"
+  "reasoning": "<2-3 sentences explaining the scores, citing specific elements. Mention what's working AND what could be improved.>"
 }
 
 Output ONLY the JSON object. No markdown fences, no prose.`;
 
-  const response = await zai.chat.completions.createVision({
-    messages: [
-      { role: "system", content: systemPrompt },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: userPrompt },
-          {
-            type: "image_url",
-            image_url: { url: args.imageDataUrl },
-          },
-        ],
-      },
-    ],
-    thinking: { type: "disabled" },
-  });
+  const raw = await callGroqVision(systemPrompt, userPrompt, args.imageDataUrl);
 
-  const raw = (response.choices?.[0]?.message?.content ?? "")
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
 
   let parsed: any;
   try {
-    parsed = JSON.parse(raw);
+    parsed = JSON.parse(cleaned);
   } catch {
-    const match = raw.match(/\{[\s\S]*\}/);
+    const match = cleaned.match(/\{[\s\S]*\}/);
     if (match) {
       parsed = JSON.parse(match[0]);
     } else {
-      throw new Error("Z.AI vision returned non-JSON. Raw: " + raw.slice(0, 200));
+      throw new Error("Groq vision returned non-JSON. Raw: " + raw.slice(0, 200));
     }
   }
 
@@ -394,20 +344,12 @@ Output ONLY the JSON object. No markdown fences, no prose.`;
   const ctr = clamp(Number(parsed.ctr ?? 0), 0, 5);
   const reasoning = String(parsed.reasoning ?? "").slice(0, 1200);
 
-  // Overall = weighted average (composition 30%, emotion 25%, text 25%, CTR normalized 20%)
   const ctrNormalized = (ctr / 5) * 100;
   const overall = Math.round(
     composition * 0.3 + emotion * 0.25 + textLegibility * 0.25 + ctrNormalized * 0.2
   );
 
-  return {
-    composition,
-    emotion,
-    textLegibility,
-    ctr,
-    reasoning,
-    overall: clamp(overall, 0, 100),
-  };
+  return { composition, emotion, textLegibility, ctr, reasoning, overall: clamp(overall, 0, 100) };
 }
 
 function clamp(n: number, min: number, max: number) {
