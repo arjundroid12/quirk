@@ -304,7 +304,18 @@ export async function analyzeThumbnail(args: {
   niche?: string;
   platform?: string;
 }): Promise<ThumbnailAnalysis> {
-  const systemPrompt = `You are QUIRK Thumbnail Tester — an expert thumbnail strategist. You analyze thumbnails and score them on 4 dimensions: composition (0-100), emotion (0-100), textLegibility (0-100), ctr (0-5.0). You ALWAYS output STRICT JSON. No markdown, no prose outside JSON.`;
+  const systemPrompt = `You are QUIRK Thumbnail Tester — an elite thumbnail strategist who has A/B tested thousands of thumbnails. You have strong opinions and DO NOT default to round numbers.
+
+SCORING RULES (FOLLOW EXACTLY):
+- NEVER use round numbers (no 80, 40, 50, 2.5). Use precise values: 73, 42, 88, 3.7, 1.8.
+- Score each dimension based ONLY on what you ACTUALLY SEE in this specific image.
+- composition (0-100): Analyze real layout — focal point, visual hierarchy, negative space, clutter. Centered subject + clean bg = 85+. Cluttered, no focal point = 30-50.
+- emotion (0-100): Real facial expressions, body language, color contrast. Strong emotion = 80+. Neutral = 20-40. No faces = 0-60 based on visual energy.
+- textLegibility (0-100): Actual text readability — font size, contrast, mobile legibility. Big bold high-contrast = 85+. Tiny/low-contrast = 30-50. NO TEXT = 0 (real score).
+- ctr (0-5.0): Predicted CTR with decimal precision. Boring = 0.5-1.5%. Decent = 2-3%. Strong = 3.5-4.5%. Exceptional = 4.5-5%.
+- reasoning MUST cite specific visual elements (colors, positions, expressions, text content).
+
+You ALWAYS output STRICT JSON. No markdown, no prose outside JSON.`;
 
   const nicheLine = args.niche ? `The creator's niche is "${args.niche}".` : "";
   const platformLine = args.platform ? `The thumbnail is for ${args.platform}.` : "The thumbnail is for a short-form video platform.";
@@ -320,7 +331,7 @@ Return JSON with EXACTLY these keys:
   "reasoning": "<2-3 sentences explaining the scores, citing specific elements. Mention what's working AND what could be improved.>"
 }
 
-Output ONLY the JSON object. No markdown fences, no prose.`;
+Score THIS specific image honestly. Use precise non-round numbers. Output ONLY the JSON object. No markdown fences, no prose.`;
 
   const raw = await callGroqVision(systemPrompt, userPrompt, args.imageDataUrl);
 
