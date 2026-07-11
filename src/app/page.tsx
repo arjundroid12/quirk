@@ -84,7 +84,7 @@ export default function LandingPage() {
         <Hero />
 
         {/* Pains → Solutions */}
-        <section id="proof" className="relative py-24 sm:py-32 border-y border-border/60">
+        <section className="relative py-24 sm:py-32 border-y border-border/60">
           <div className="absolute inset-0 bg-grid opacity-40 pointer-events-none" />
           <div className="relative mx-auto max-w-7xl px-6">
             <div className="max-w-2xl">
@@ -125,7 +125,6 @@ export default function LandingPage() {
         </section>
 
         {/* Features */}
-      <section id="features"
         <section className="py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6">
             <div className="text-center max-w-2xl mx-auto">
