@@ -49,7 +49,7 @@ interface TursoResponse {
 /** Convert a JS value to Turso's pipeline format. */
 function toTursoArg(val: any): any {
   if (val === null || val === undefined) return { type: "null" };
-  if (typeof val === "number") return { type: Number.isInteger(val) ? "integer" : "float", value: val };
+  if (typeof val === "number") return { type: "float", value: val };
   if (typeof val === "boolean") return { type: "integer", value: val ? 1 : 0 };
   // Convert Date objects to ISO strings
   if (val instanceof Date) return { type: "text", value: val.toISOString() };
