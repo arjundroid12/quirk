@@ -60,3 +60,14 @@ download/test-thumb-*.png
 # Logs
 *.log
 .vercel
+
+# Sandbox-only directories (not part of QUIRK app)
+skills/
+createos-context/
+upload/
+mini-services/
+examples/
+worklog.md
+.zscripts/
+Caddyfile
+bun.lock
