@@ -22,8 +22,8 @@ export async function POST(req: Request) {
     });
     return NextResponse.json({ ok: true, id: entry.id });
   } catch (err: any) {
-    console.error("[waitlist] error", err);
-    return NextResponse.json({ ok: false, error: "Server error" }, { status: 500 });
+    console.error("[waitlist] error", err?.message || err);
+    return NextResponse.json({ ok: false, error: err?.message || "Server error", details: { msg: err?.message, stack: err?.stack?.slice(0, 200) } }, { status: 500 });
   }
 }
 
