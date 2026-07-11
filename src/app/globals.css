@@ -49,7 +49,7 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
-/* QUIRK Light (cream) theme */
+/* QUIRK theme — Fly.io-inspired pastel gradient + star particles */
 :root {
   --radius: 0.75rem;
 
@@ -60,10 +60,10 @@
   --brand-cream: #FAFAF7;    /* cream */
   --brand-dark: #0F0F1A;     /* near-black */
 
-  /* Surfaces */
+  /* Surfaces — translucent for glass effect over gradient */
   --background: #FAFAF7;
   --foreground: #0F0F1A;
-  --card: #FFFFFF;
+  --card: rgba(255, 255, 255, 0.72);
   --card-foreground: #0F0F1A;
   --popover: #FFFFFF;
   --popover-foreground: #0F0F1A;
@@ -78,49 +78,10 @@
   --accent: #FCE7F3;
   --accent-foreground: #831843;
   --destructive: #DC2626;
-  --destructive-foreground: #FFFFFF;
-  --border: #E6E2DC;
-  --input: #E6E2DC;
+
+  --border: rgba(124, 58, 237, 0.12);
+  --input: rgba(124, 58, 237, 0.12);
   --ring: #7C3AED;
-
-  --chart-1: #7C3AED;
-  --chart-2: #EC4899;
-  --chart-3: #F59E0B;
-  --chart-4: #10B981;
-  --chart-5: #0EA5E9;
-
-  --sidebar: #0F0F1A;
-  --sidebar-foreground: #FAFAF7;
-  --sidebar-primary: #7C3AED;
-  --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #1F1F2E;
-  --sidebar-accent-foreground: #FAFAF7;
-  --sidebar-border: #1F1F2E;
-  --sidebar-ring: #7C3AED;
-}
-
-/* QUIRK Dark theme */
-.dark {
-  --background: #0F0F1A;
-  --foreground: #FAFAF7;
-  --card: #18182A;
-  --card-foreground: #FAFAF7;
-  --popover: #18182A;
-  --popover-foreground: #FAFAF7;
-
-  --primary: #7C3AED;
-  --primary-foreground: #FFFFFF;
-  --secondary: #1F1F2E;
-  --secondary-foreground: #E9D5FF;
-  --muted: #18182A;
-  --muted-foreground: #A1A1B5;
-  --accent: #2A1A3E;
-  --accent-foreground: #FBCFE8;
-  --destructive: #F87171;
-  --destructive-foreground: #0F0F1A;
-  --border: #2A2A3F;
-  --input: #2A2A3F;
-  --ring: #A78BFA;
 
   --chart-1: #A78BFA;
   --chart-2: #F472B6;
@@ -143,13 +104,58 @@
     border-color: var(--border);
   }
   body {
-    background-color: var(--background);
+    /* Fly.io-style pastel gradient background */
+    background-color: #FAFAF7;
+    background-image:
+      radial-gradient(ellipse 80% 60% at 20% 0%, rgba(252, 231, 243, 0.8) 0%, transparent 50%),
+      radial-gradient(ellipse 80% 60% at 80% 100%, rgba(224, 242, 254, 0.8) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 40% at 50% 50%, rgba(241, 236, 254, 0.5) 0%, transparent 50%);
+    background-attachment: fixed;
     color: var(--foreground);
     font-feature-settings: "ss01", "cv11";
+    min-height: 100vh;
   }
   ::selection {
     background-color: rgba(124, 58, 237, 0.25);
   }
+}
+
+/* Star particle background — CSS-only sparkles scattered across the page */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  /* Star particles using radial gradients */
+  background-image:
+    radial-gradient(2px 2px at 10% 20%, rgba(196, 181, 253, 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 25% 60%, rgba(244, 114, 182, 0.5), transparent),
+    radial-gradient(2px 2px at 50% 15%, rgba(196, 181, 253, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 70% 80%, rgba(56, 189, 248, 0.4), transparent),
+    radial-gradient(2px 2px at 85% 30%, rgba(196, 181, 253, 0.5), transparent),
+    radial-gradient(1px 1px at 15% 75%, rgba(244, 114, 182, 0.4), transparent),
+    radial-gradient(1.5px 1.5px at 40% 90%, rgba(56, 189, 248, 0.3), transparent),
+    radial-gradient(2px 2px at 60% 45%, rgba(196, 181, 253, 0.4), transparent),
+    radial-gradient(1px 1px at 90% 65%, rgba(244, 114, 182, 0.3), transparent),
+    radial-gradient(1.5px 1.5px at 30% 40%, rgba(167, 139, 250, 0.4), transparent),
+    radial-gradient(2px 2px at 75% 10%, rgba(56, 189, 248, 0.3), transparent),
+    radial-gradient(1px 1px at 5% 50%, rgba(196, 181, 253, 0.3), transparent);
+  animation: twinkle 4s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Ensure content sits above the particle layer */
+#__next, body > div:first-child {
+  position: relative;
+  z-index: 1;
 }
 
 /* Custom utility classes for QUIRK */
@@ -165,9 +171,9 @@
 }
 
 @utility glass {
-  background-color: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  background-color: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
 }
 
 @utility glass-dark {
@@ -180,24 +186,31 @@
 .custom-scroll::-webkit-scrollbar { width: 8px; height: 8px; }
 .custom-scroll::-webkit-scrollbar-track { background: transparent; }
 .custom-scroll::-webkit-scrollbar-thumb {
-  background-color: hsl(var(--muted-foreground) / 0.35);
+  background-color: rgba(124, 58, 237, 0.2);
   border-radius: 9999px;
 }
 .custom-scroll::-webkit-scrollbar-thumb:hover {
-  background-color: hsl(var(--muted-foreground) / 0.55);
+  background-color: rgba(124, 58, 237, 0.4);
 }
 
 /* Subtle grid pattern for hero */
 @utility bg-grid {
   background-image:
-    linear-gradient(to right, rgba(124, 58, 237, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(124, 58, 237, 0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgba(124, 58, 237, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(124, 58, 237, 0.04) 1px, transparent 1px);
   background-size: 56px 56px;
 }
 
-/* Glow */
+/* Glow — softer for light theme */
 @utility glow-brand {
-  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.15),
-              0 18px 60px -20px rgba(124, 58, 237, 0.45),
-              0 8px 30px -10px rgba(236, 72, 153, 0.25);
+  box-shadow: 0 0 0 1px rgba(124, 58, 237, 0.1),
+              0 18px 60px -20px rgba(124, 58, 237, 0.3),
+              0 8px 30px -10px rgba(236, 72, 153, 0.15);
+}
+
+/* Soft pastel glow orbs for hero sections */
+@utility glow-pastel {
+  box-shadow:
+    0 0 80px -10px rgba(252, 231, 243, 0.8),
+    0 0 120px -20px rgba(224, 242, 254, 0.6);
 }
