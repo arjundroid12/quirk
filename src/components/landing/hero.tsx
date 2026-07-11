@@ -103,15 +103,15 @@ export function Hero() {
               src="/art/hero-illustration.png"
               alt=""
               aria-hidden="true"
-              className="absolute -top-16 -right-12 z-0 w-80 h-80 object-contain opacity-60 pointer-events-none select-none"
-              style={{ filter: "blur(2px)" }}
+              className="absolute -top-16 -right-12 z-0 w-96 h-96 object-contain opacity-100 pointer-events-none select-none"
+              
             />
             {/* Floating blob shapes */}
             <img
               src="/art/blob-shapes.png"
               alt=""
               aria-hidden="true"
-              className="absolute -bottom-20 -left-16 z-0 w-64 h-64 object-contain opacity-40 pointer-events-none select-none"
+              className="absolute -bottom-20 -left-16 z-0 w-80 h-80 object-contain opacity-80 pointer-events-none select-none"
             />
             <div className="relative z-10 rounded-3xl border border-border bg-card p-3 shadow-2xl shadow-brand/10 glow-brand">
               {/* Mock browser chrome */}
