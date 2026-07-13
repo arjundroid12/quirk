@@ -1,8 +1,0 @@
-{
-  "functions": {
-    "src/app/api/scripts/route.ts": { "maxDuration": 60 },
-    "src/app/api/scripts/improve/route.ts": { "maxDuration": 60 },
-    "src/app/api/ideas/route.ts": { "maxDuration": 60 },
-    "src/app/api/thumbnails/route.ts": { "maxDuration": 60 }
-  }
-}
