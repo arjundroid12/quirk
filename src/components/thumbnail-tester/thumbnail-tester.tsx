@@ -139,6 +139,10 @@ export function ThumbnailTester({ initialBatches }: { initialBatches: Batch[] })
           platform: platform || undefined,
         }),
       });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Server returned ${res.status}. ${text.slice(0, 100) || "Try again — the AI may be busy."}`);
+      }
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Failed");
       const batch: Batch = {

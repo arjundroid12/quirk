@@ -124,6 +124,7 @@ export function IdeaEngine({ initialIdeas }: { initialIdeas: Idea[] }) {
       return;
     }
     setLoading(true);
+    toast.info("Generating ideas... AI is thinking (takes ~30s)", { duration: 8000 });
     try {
       const res = await fetch("/api/ideas", {
         method: "POST",
@@ -136,6 +137,10 @@ export function IdeaEngine({ initialIdeas }: { initialIdeas: Idea[] }) {
           generate: true,
         }),
       });
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Server returned ${res.status}. ${text.slice(0, 100) || "Try again — the AI may be busy."}`);
+      }
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Failed");
       toast.success(`Generated ${data.ideas.length} ideas ✨`);

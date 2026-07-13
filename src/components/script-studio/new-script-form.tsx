@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -53,6 +53,16 @@ export function NewScriptForm() {
   const [durationSec, setDurationSec] = useState("");
   const [cta, setCta] = useState("");
   const [loading, setLoading] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+
+  useEffect(() => {
+    if (!loading) return;
+    const start = Date.now();
+    const interval = setInterval(() => {
+      setElapsed(Math.floor((Date.now() - start) / 1000));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +71,8 @@ export function NewScriptForm() {
       return;
     }
     setLoading(true);
+    setElapsed(0);
+    toast.info("Generating script... AI is thinking (takes ~30s)", { duration: 8000 });
     try {
       const res = await fetch("/api/scripts", {
         method: "POST",
@@ -75,13 +87,21 @@ export function NewScriptForm() {
           generate: true,
         }),
       });
+
+      if (!res.ok) {
+        const text = await res.text().catch(() => "");
+        throw new Error(`Server returned ${res.status}. ${text.slice(0, 100) || "Try again — the AI may be busy."}`);
+      }
+
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Failed to generate");
       toast.success("Script generated 🎉");
       router.push(`/app/scripts/${data.script.id}`);
     } catch (err: any) {
-      toast.error(err?.message ?? "Failed to generate script");
+      console.error("[script generation] error:", err);
+      toast.error(err?.message ?? "Failed to generate script. Please try again.");
       setLoading(false);
+      setElapsed(0);
     }
   };
 
@@ -219,7 +239,7 @@ export function NewScriptForm() {
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Generating script...
+              Generating{elapsed > 0 ? ` · ${elapsed}s` : "..."}
             </>
           ) : (
             <>
