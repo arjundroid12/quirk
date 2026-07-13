@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+export const maxDuration = 60;
 import { getSession } from "@/lib/session";
 import { improveScriptSection, type ScriptGenInput } from "@/lib/zai";
 import { z } from "zod";
