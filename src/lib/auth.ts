@@ -77,27 +77,49 @@ export const authOptions: NextAuthOptions = {
               const email = credentials.email.toLowerCase().trim();
               const name = credentials.name?.trim() || email.split("@")[0];
 
-              // Try upsert. If it fails, try once more (handles race conditions + transient errors).
-              for (let attempt = 1; attempt <= 2; attempt++) {
-                try {
-                  const user = await db.user.upsert({
-                    where: { email },
-                    update: { name },
-                    create: { email, name, emailVerified: new Date() },
+              // Direct Turso fetch — bypass db.ts (which is broken on Next.js 16)
+              try {
+                const url = process.env.DATABASE_URL!.replace("libsql://", "https://") + "/v2/pipeline";
+                const token = process.env.LIBSQL_TOKEN;
+                const nowIso = new Date().toISOString();
+
+                // 1. Check if user exists
+                const checkRes = await fetch(url, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                  body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql: "SELECT id, email, name FROM User WHERE email = ?", args: [{ type: "text", value: email }] } }] }),
+                });
+                const checkData = await checkRes.json();
+                const rows = checkData.results?.[0]?.response?.result?.rows || [];
+                const cols = checkData.results?.[0]?.response?.result?.cols || [];
+
+                let userId: string;
+
+                if (rows.length > 0) {
+                  // User exists — update name + return id
+                  userId = rows[0][0]?.value;
+                  await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql: "UPDATE User SET name = ?, updatedAt = ? WHERE id = ?", args: [{ type: "text", value: name }, { type: "text", value: nowIso }, { type: "text", value: userId }] } }] }),
                   });
-                  if (user?.id && !user.id.startsWith("transient_")) {
-                    return { id: user.id, email: user.email || email, name: user.name || name } as any;
-                  }
-                  console.warn(`[auth] attempt ${attempt}: upsert returned invalid user`, user);
-                } catch (err) {
-                  console.error(`[auth] attempt ${attempt} failed:`, err);
+                } else {
+                  // Create new user
+                  userId = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+                  await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+                    body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql: "INSERT INTO User (id, email, name, emailVerified, role, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)", args: [{ type: "text", value: userId }, { type: "text", value: email }, { type: "text", value: name }, { type: "text", value: nowIso }, { type: "text", value: "user" }, { type: "text", value: nowIso }, { type: "text", value: nowIso }] } }] }),
+                  });
                 }
-                // Brief pause before retry
-                if (attempt < 2) await new Promise((r) => setTimeout(r, 500));
+
+                if (userId) {
+                  return { id: userId, email, name } as any;
+                }
+              } catch (err) {
+                console.error("[auth] direct Turso fetch failed:", err);
               }
 
-              // All attempts failed — return null (user sees signin error)
-              console.error("[auth] all upsert attempts failed for", email);
               return null;
             },
           }),
