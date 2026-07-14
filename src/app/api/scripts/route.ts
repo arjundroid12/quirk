@@ -1,6 +1,5 @@
-import { getToken } from "next-auth/jwt";
-import { cookies } from "next/headers";
 import { db } from "@/lib/db";
+import { getSession } from "@/lib/session";
 import { generateScript, type ScriptGenInput } from "@/lib/zai";
 import { z } from "zod";
 
@@ -19,20 +18,12 @@ const CreateScriptSchema = z.object({
   content: z.string().optional().nullable(),
 });
 
-async function getAuthUserId(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const cookieStr = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
-  const token = await getToken({
-    req: { headers: { cookie: cookieStr } } as any,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-  return (token?.id as string) || null;
-}
-
 export async function POST(req: Request) {
   try {
-    const userId = await getAuthUserId();
-    if (!userId) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    const session = await getSession();
+    if (!session?.user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    const userId = (session.user as any).id as string;
+    if (!userId) return Response.json({ ok: false, error: "No user id in session" }, { status: 401 });
 
     const body = await req.json();
     const parsed = CreateScriptSchema.safeParse(body);
@@ -76,8 +67,9 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const userId = await getAuthUserId();
-    if (!userId) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    const session = await getSession();
+    if (!session?.user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    const userId = (session.user as any).id as string;
     const scripts = await db.script.findMany({ where: { authorId: userId }, orderBy: { createdAt: "desc" }, take: 100 });
     return Response.json({ ok: true, scripts });
   } catch (err: any) {
