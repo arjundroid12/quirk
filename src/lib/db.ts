@@ -75,10 +75,16 @@ function parseRow(columns: string[], rawRow: Array<{ type: string; value: any }>
 }
 
 async function executePipeline(statements: Array<{ sql: string; args: any[] }>): Promise<TursoResponse> {
-  const url = getDbUrl() + "/v2/pipeline";
-  const token = getToken();
+  // Use the SAME URL construction as the working raw test
+  const rawUrl = process.env.DATABASE_URL || "";
+  const url = rawUrl.replace("libsql://", "https://") + "/v2/pipeline";
+  const token = process.env.LIBSQL_TOKEN;
 
-  // Build body exactly like the working raw test
+  if (!url || !url.startsWith("https://")) {
+    throw new Error(`Invalid DATABASE_URL: ${rawUrl.slice(0, 50)}`);
+  }
+
+  // Build body — exact same format as the working raw test
   const body = {
     requests: statements.map((stmt) => ({
       type: "execute",
@@ -109,18 +115,7 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
     throw new Error(`Turso API ${res.status}: ${text}`);
   }
 
-  const data = await res.json();
-
-  // Check for Turso-level errors
-  for (const result of data.results || []) {
-    if (result.type === "error") {
-      const errObj = result.error as any;
-      const msg = typeof errObj === 'string' ? errObj : (errObj?.message || JSON.stringify(errObj));
-      throw new Error(`Turso error: ${msg}`);
-    }
-  }
-
-  return data;
+  return res.json();
 }
 
 /** Execute a query and return rows as plain objects. */
