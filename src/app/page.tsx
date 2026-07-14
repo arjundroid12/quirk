@@ -12,6 +12,7 @@ import {
   Instagram,
   Youtube,
   CheckCircle2,
+  Wand2,
 } from "lucide-react";
 import { WaitlistForm } from "@/components/landing/waitlist-form";
 import { Navbar } from "@/components/landing/navbar";
@@ -24,6 +25,13 @@ const features = [
     tag: "Writes with you",
     desc: "AI scripts for Reels, Shorts, TikTok, and long-form. Hook templates, platform-native pacing, CTAs that don't feel salesy. Edit inline with one click.",
     color: "from-violet-500 to-fuchsia-500",
+  },
+  {
+    icon: Wand2,
+    name: "Humanizer",
+    tag: "Bypasses AI detection",
+    desc: "One click rewrites your script to evade Sapling, CopyLeaks, Quillbot, and Scribbr. Short sentences, natural rhythm, zero AI vocabulary. Your scripts read like a human wrote them.",
+    color: "from-purple-500 to-violet-500",
   },
   {
     icon: Lightbulb,
