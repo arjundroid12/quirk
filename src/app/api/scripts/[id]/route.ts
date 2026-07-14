@@ -19,12 +19,10 @@ const UpdateScriptSchema = z.object({
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    console.error("[scripts GET /id] id:", id);
 
-    // Direct Turso fetch — bypass all db.ts abstractions
+    // Direct Turso fetch — bypass db.ts abstractions (they were failing silently)
     const url = process.env.DATABASE_URL?.replace("libsql://", "https://") + "/v2/pipeline";
     const token = process.env.LIBSQL_TOKEN;
-    console.error("[scripts GET /id] url:", url?.slice(0, 50), "hasToken:", !!token);
 
     const res = await fetch(url, {
       method: "POST",
@@ -32,10 +30,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
       body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql: "SELECT * FROM Script WHERE id = ?", args: [{ type: "text", value: id }] } }] }),
     });
 
-    console.error("[scripts GET /id] Turso status:", res.status);
     const data = await res.json();
-    console.error("[scripts GET /id] Turso type:", data.results?.[0]?.type);
-
     const rows = data.results?.[0]?.response?.result?.rows || [];
     const cols = data.results?.[0]?.response?.result?.cols || [];
 
@@ -52,7 +47,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json({ ok: true, script });
   } catch (err: any) {
-    console.error("[scripts GET /id] ERROR:", err);
+    console.error("[scripts GET /id] error:", err);
     return NextResponse.json({ ok: false, error: err?.message }, { status: 500 });
   }
 }
