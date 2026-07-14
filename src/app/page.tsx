@@ -91,6 +91,51 @@ export default function LandingPage() {
       <main className="flex-1">
         <Hero />
 
+        {/* Creator lifestyle illustration */}
+        <section className="py-16 sm:py-24">
+          <div className="mx-auto max-w-7xl px-6">
+            <div className="grid lg:grid-cols-2 gap-12 items-center">
+              <div className="order-2 lg:order-1">
+                <span className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-brand">
+                  <span className="h-1.5 w-1.5 rounded-full bg-brand-pink" />
+                  Built for creators, by a creator
+                </span>
+                <h2 className="mt-4 font-display text-3xl sm:text-4xl font-bold tracking-tight">
+                  Spend less time planning.{" "}
+                  <span className="brand-gradient-text">More time creating.</span>
+                </h2>
+                <p className="mt-4 text-muted-foreground text-lg leading-relaxed">
+                  QUIRK handles the busywork — scripts, ideas, hashtags, thumbnails — so you can focus on what actually matters: filming, editing, and growing your audience.
+                </p>
+                <ul className="mt-6 space-y-3">
+                  {[
+                    "8 AI tools in one workspace",
+                    "From idea to script in under 60 seconds",
+                    "Anti-AI-detection humanizer built in",
+                    "Works on any device, no install needed",
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-3 text-sm">
+                      <CheckCircle2 className="h-5 w-5 text-brand shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="order-1 lg:order-2 relative">
+                <div className="absolute inset-0 bg-brand/5 rounded-3xl blur-3xl" />
+                <div className="relative rounded-3xl overflow-hidden border border-border/60 shadow-xl">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/creator-art.webp"
+                    alt="Creator relaxing with plants — the QUIRK lifestyle"
+                    className="w-full h-auto"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Pains → Solutions */}
         <section className="relative py-24 sm:py-32 border-y border-border/60">
           <div className="absolute inset-0 bg-grid opacity-40 pointer-events-none" />
