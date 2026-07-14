@@ -120,10 +120,15 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
 
 /** Execute a query and return rows as plain objects. */
 export async function query<T = Row>(sql: string, args: any[] = []): Promise<T[]> {
-  const response = await executePipeline([{ sql, args }]);
-  const result = response.results?.[0]?.response?.result;
-  if (!result || !result.rows || !result.columns) return [];
-  return result.rows.map((raw) => parseRow(result.columns!, raw)) as T[];
+  try {
+    const response = await executePipeline([{ sql, args }]);
+    const result = response.results?.[0]?.response?.result;
+    if (!result || !result.rows || !result.columns) return [];
+    return result.rows.map((raw) => parseRow(result.columns!, raw)) as T[];
+  } catch (err) {
+    console.error("[db query] ERROR:", err?.message || err, "sql:", sql.slice(0, 80), "args:", JSON.stringify(args).slice(0, 100));
+    return [];
+  }
 }
 
 /** Execute a query and return the first row, or null. */
