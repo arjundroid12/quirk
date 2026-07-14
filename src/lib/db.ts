@@ -155,6 +155,7 @@ export async function query<T = Row>(sql: string, args: any[] = []): Promise<T[]
 
     const data = await res.json();
     const result = data.results?.[0]?.response?.result;
+    console.error("[db query] sql:", sql.slice(0, 60), "| result exists:", !!result, "| rows:", result?.rows?.length, "| type:", data.results?.[0]?.type);
     if (!result || !result.rows || !result.columns) return [];
     return result.rows.map((raw: any) => parseRow(result.columns, raw)) as T[];
   } catch (err: any) {
