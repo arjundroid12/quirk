@@ -14,6 +14,7 @@ const UpdateScriptSchema = z.object({
   niche: z.string().max(80).optional(),
   cta: z.string().max(200).optional().nullable(),
   tags: z.string().optional().nullable(),
+  status: z.enum(["draft", "filming", "filmed", "published"]).optional(),
 });
 
 async function getAuthUserId(): Promise<string | null> {

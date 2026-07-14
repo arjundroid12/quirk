@@ -9,11 +9,11 @@ export const dynamic = "force-dynamic";
 
 const ImproveSchema = z.object({
   section: z.enum(["hook", "body", "cta"]),
-  current: z.string().min(1).max(8000),
+  current: z.string().min(1).max(16000),
   niche: z.string().min(1).max(80),
   platform: z.enum(["reels", "shorts", "tiktok", "longform", "carousel"]),
   tone: z.enum(["casual", "hype", "educational", "storytelling", "authoritative"]),
-  instruction: z.string().max(500).optional(),
+  instruction: z.string().max(1000).optional(),
 });
 
 async function getAuthUserId(): Promise<string | null> {

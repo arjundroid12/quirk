@@ -106,10 +106,10 @@ export async function POST(req: Request) {
 
     const id = genId();
     await tursoExecute(
-      "INSERT INTO Script (id, title, content, platform, tone, niche, cta, tags, authorId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      [id, title || "Untitled script", content, input.platform, input.tone, input.niche, cta || null, hashtags.join(","), userId, now(), now()]
+      "INSERT INTO Script (id, title, content, platform, tone, niche, cta, tags, authorId, status, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, title || "Untitled script", content, input.platform, input.tone, input.niche, cta || null, hashtags.join(","), userId, "draft", now(), now()]
     );
-    return Response.json({ ok: true, script: { id, title, content, platform: input.platform, tone: input.tone, niche: input.niche, cta, tags: hashtags.join(","), authorId: userId, createdAt: now(), updatedAt: now() } });
+    return Response.json({ ok: true, script: { id, title, content, platform: input.platform, tone: input.tone, niche: input.niche, cta, tags: hashtags.join(","), authorId: userId, status: "draft", createdAt: now(), updatedAt: now() } });
   } catch (err: any) {
     console.error("[scripts POST] error", err);
     return Response.json({ ok: false, error: err?.message ?? "Server error" }, { status: 500 });
