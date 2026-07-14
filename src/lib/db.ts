@@ -107,14 +107,16 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
   // Check for Turso-level errors in each result
   for (const result of data.results || []) {
     if (result.error) {
-      throw new Error(`Turso error: ${result.error}`);
+      const errMsg = typeof result.error === 'string' ? result.error : (result.error as any)?.message || JSON.stringify(result.error);
+      throw new Error(`Turso error: ${errMsg}`);
     }
     if (result.response?.error) {
       throw new Error(`Turso response error: ${result.response.error}`);
     }
     // Some errors come as type "error" instead of "ok"
     if (result.type === "error") {
-      throw new Error(`Turso result error: ${result.error || JSON.stringify(result)}`);
+      const errMsg = typeof result.error === 'string' ? result.error : (result.error as any)?.message || JSON.stringify(result);
+      throw new Error(`Turso result error: ${errMsg}`);
     }
   }
 
@@ -125,7 +127,14 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
 export async function query<T = Row>(sql: string, args: any[] = []): Promise<T[]> {
   const response = await executePipeline([{ sql, args }]);
   const result = response.results?.[0]?.response?.result;
-  if (!result || !result.rows || !result.columns) return [];
+  if (!result) {
+    console.error("[db] query: no result in response", JSON.stringify(response).slice(0, 300));
+    return [];
+  }
+  if (!result.rows || !result.columns) {
+    console.error("[db] query: no rows/columns in result", JSON.stringify(result).slice(0, 300));
+    return [];
+  }
   return result.rows.map((raw) => parseRow(result.columns!, raw)) as T[];
 }
 
