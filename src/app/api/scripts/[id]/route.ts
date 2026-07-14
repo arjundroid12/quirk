@@ -21,11 +21,35 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     const { id } = await params;
     console.error("[scripts GET /id] id:", id);
 
-    // Bypass db.script.findUnique — call queryOne directly
-    const script = await queryOne<any>("SELECT * FROM Script WHERE id = ?", [id]);
-    console.error("[scripts GET /id] queryOne result:", !!script, script?.id);
+    // Direct Turso fetch — bypass all db.ts abstractions
+    const url = process.env.DATABASE_URL?.replace("libsql://", "https://") + "/v2/pipeline";
+    const token = process.env.LIBSQL_TOKEN;
+    console.error("[scripts GET /id] url:", url?.slice(0, 50), "hasToken:", !!token);
 
-    if (!script) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql: "SELECT * FROM Script WHERE id = ?", args: [{ type: "text", value: id }] } }] }),
+    });
+
+    console.error("[scripts GET /id] Turso status:", res.status);
+    const data = await res.json();
+    console.error("[scripts GET /id] Turso type:", data.results?.[0]?.type);
+
+    const rows = data.results?.[0]?.response?.result?.rows || [];
+    const cols = data.results?.[0]?.response?.result?.cols || [];
+
+    if (rows.length === 0) {
+      return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    }
+
+    // Parse row manually
+    const script: any = {};
+    cols.forEach((col: any, i: number) => {
+      const cell = rows[0][i];
+      script[col.name] = cell?.value ?? null;
+    });
+
     return NextResponse.json({ ok: true, script });
   } catch (err: any) {
     console.error("[scripts GET /id] ERROR:", err);
