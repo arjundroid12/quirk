@@ -19,13 +19,14 @@ const UpdateScriptSchema = z.object({
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+    console.log("[scripts GET /id] looking for script:", id);
     const script = await db.script.findUnique({ where: { id } });
-    if (!script) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-    // Note: auth check disabled for demo purposes — getSession() is flaky on Next.js 16
-    // The middleware already ensures only authenticated users reach this route
+    console.log("[scripts GET /id] found:", !!script, script ? `title=${script.title}` : "");
+    if (!script) return NextResponse.json({ ok: false, error: "Not found", debug: { id } }, { status: 404 });
     return NextResponse.json({ ok: true, script });
   } catch (err: any) {
-    return NextResponse.json({ ok: false, error: err?.message }, { status: 500 });
+    console.error("[scripts GET /id] error:", err);
+    return NextResponse.json({ ok: false, error: err?.message, stack: err?.stack?.split('\n').slice(0,3) }, { status: 500 });
   }
 }
 
