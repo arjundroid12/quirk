@@ -83,6 +83,16 @@ export default function AppDashboard() {
         </Button>
       </div>
 
+      {/* Decorative illustration banner */}
+      <div className="mt-6 relative rounded-3xl overflow-hidden border border-border/60 h-32">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/art-vision.avif" alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-r from-brand/60 via-brand-pink/40 to-transparent" />
+        <div className="relative h-full flex items-center px-8">
+          <p className="text-white font-display text-lg font-bold drop-shadow-lg">8 AI tools. One workspace. Create freely.</p>
+        </div>
+      </div>
+
       {/* Feature cards */}
       <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link href="/app/scripts/new" className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand/5">

@@ -209,6 +209,13 @@ export default function LandingPage() {
           </div>
         </section>
 
+        {/* Decorative art divider */}
+        <div className="relative h-40 overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/art-mental.avif" alt="" className="absolute inset-0 w-full h-full object-cover opacity-30" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background via-transparent to-background" />
+        </div>
+
         {/* Features */}
         <section className="py-24 sm:py-32">
           <div className="mx-auto max-w-7xl px-6">

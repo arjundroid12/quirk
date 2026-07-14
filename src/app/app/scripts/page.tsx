@@ -84,17 +84,22 @@ export default function ScriptsListPage() {
           <p className="text-sm text-destructive">{error}</p>
         </div>
       ) : scripts.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-border bg-card/50 p-12 text-center">
-          <div className="inline-flex h-14 w-14 rounded-2xl brand-gradient items-center justify-center text-white mb-4">
-            <PenLine className="h-6 w-6" />
+        <div className="relative rounded-3xl border border-dashed border-border bg-card/50 p-12 text-center overflow-hidden">
+          {/* Decorative illustration */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/art-summer.avif" alt="" className="absolute inset-0 w-full h-full object-cover opacity-15" />
+          <div className="relative">
+            <div className="inline-flex h-14 w-14 rounded-2xl brand-gradient items-center justify-center text-white mb-4">
+              <PenLine className="h-6 w-6" />
+            </div>
+            <h3 className="font-display text-lg font-bold">No scripts yet</h3>
+            <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
+              Generate your first script — AI writes the hook, body, CTA, and hashtags.
+            </p>
+            <Button asChild className="mt-5 brand-gradient text-white">
+              <Link href="/app/scripts/new"><Plus className="mr-1.5 h-4 w-4" />Create your first script</Link>
+            </Button>
           </div>
-          <h3 className="font-display text-lg font-bold">No scripts yet</h3>
-          <p className="mt-1 text-sm text-muted-foreground max-w-sm mx-auto">
-            Generate your first script — AI writes the hook, body, CTA, and hashtags.
-          </p>
-          <Button asChild className="mt-5 brand-gradient text-white">
-            <Link href="/app/scripts/new"><Plus className="mr-1.5 h-4 w-4" />Create your first script</Link>
-          </Button>
         </div>
       ) : (
         <div className="space-y-3">
