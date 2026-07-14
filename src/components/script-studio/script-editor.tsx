@@ -65,7 +65,7 @@ const statusConfig: Record<string, { label: string; icon: any; color: string; bg
 
 const statusOrder = ["draft", "filming", "filmed", "published"];
 
-export function ScriptEditor({ script }: { script: ScriptData }) {
+export function ScriptEditor({ script, autoHumanize }: { script: ScriptData; autoHumanize?: boolean })  {
   const router = useRouter();
   const [title, setTitle] = useState(script.title);
   const [content, setContent] = useState(script.content);
@@ -76,6 +76,13 @@ export function ScriptEditor({ script }: { script: ScriptData }) {
   const [dirty, setDirty] = useState(false);
   const [humanizing, setHumanizing] = useState(false);
   const [improvingSection, setImprovingSection] = useState<string | null>(null);
+
+  // Auto-trigger humanize if coming from ?humanize=1
+  useEffect(() => {
+    if (autoHumanize && !humanizing) {
+      onHumanize();
+    }
+  }, [autoHumanize]);
 
   useEffect(() => {
     if (!dirty) return;

@@ -11,10 +11,14 @@ export default function ScriptDetailPage({ params }: { params: Promise<{ id: str
   const [script, setScript] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [scriptId, setScriptId] = useState<string>("");
+  const searchParams = useSearchParams();
+  const autoHumanize = searchParams.get("humanize") === "1";
 
   useEffect(() => {
     (async () => {
       const { id } = await params;
+      setScriptId(id);
       try {
         const res = await fetch(`/api/scripts/${id}`);
         if (!res.ok) {
@@ -57,7 +61,7 @@ export default function ScriptDetailPage({ params }: { params: Promise<{ id: str
 
   return (
     <div className="px-6 lg:px-10 py-8 max-w-5xl mx-auto">
-      <ScriptEditor script={script} />
+      <ScriptEditor script={script} autoHumanize={autoHumanize} />
     </div>
   );
 }

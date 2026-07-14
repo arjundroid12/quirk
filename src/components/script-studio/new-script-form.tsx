@@ -98,7 +98,8 @@ export function NewScriptForm() {
       const data = await res.json();
       if (!data.ok) throw new Error(data.error ?? "Failed to generate");
       toast.success("Script generated 🎉");
-      router.push(`/app/scripts/${data.script.id}`);
+      // If humanize is on, redirect with flag so editor can auto-trigger
+      router.push(`/app/scripts/${data.script.id}${humanize ? "?humanize=1" : ""}`);
     } catch (err: any) {
       console.error("[script generation] error:", err);
       toast.error(err?.message ?? "Failed to generate script. Please try again.");

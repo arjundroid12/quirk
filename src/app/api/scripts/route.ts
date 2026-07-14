@@ -1,6 +1,6 @@
 import { cookies } from "next/headers";
 import { getSession } from "@/lib/session";
-import { generateScript, humanizeScript, type ScriptGenInput } from "@/lib/zai";
+import { generateScript, type ScriptGenInput } from "@/lib/zai";
 import { z } from "zod";
 
 export const maxDuration = 60;
@@ -97,11 +97,8 @@ export async function POST(req: Request) {
         `**CTA:** ${gen.cta}`, "", `**Hashtags:** ${gen.hashtags.map((h) => "#" + h).join(" ")}`,
         "", `> Estimated duration: ${gen.estimatedDuration}`, `> ${gen.notes}`,
       ].join("\n");
-
-      // Optional humanizer pass — rewrites content to evade AI detection
-      if (input.humanize) {
-        content = await humanizeScript(content, input.niche, input.platform, input.tone);
-      }
+      // Note: humanize is now a separate step via /api/scripts/improve
+      // (2 AI calls in 1 request exceeds Vercel's 60s limit)
     }
 
     const id = genId();
