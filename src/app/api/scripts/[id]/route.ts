@@ -19,8 +19,17 @@ const UpdateScriptSchema = z.object({
 async function getAuthUserId(): Promise<string | null> {
   const cookieStore = await cookies();
   const cookieStr = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
-  const token = await getToken({ req: { headers: { cookie: cookieStr } } as any, secret: process.env.NEXTAUTH_SECRET });
-  return (token?.id as string) || null;
+  const origin = process.env.NEXTAUTH_URL || "https://quirk-ten.vercel.app";
+  try {
+    const res = await fetch(`${origin}/api/auth/session`, {
+      headers: { cookie: cookieStr },
+      cache: "no-store",
+    });
+    const data = await res.json();
+    return data?.user?.id || null;
+  } catch {
+    return null;
+  }
 }
 
 function toArg(val: any) {
