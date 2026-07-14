@@ -1,17 +1,48 @@
 import { notFound } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getToken } from "next-auth/jwt";
+import { headers, cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { ScriptEditor } from "@/components/script-studio/script-editor";
 
 export const dynamic = "force-dynamic";
 
 export default async function ScriptDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const session = await getServerSession(authOptions);
-  const user = session?.user as any;
   const { id } = await params;
 
-  // Debug: render diagnostics instead of silent 404
+  // In Next.js 16 App Router, getServerSession doesn't work reliably.
+  // Use getToken with the actual request headers + cookies.
+  const req = {
+    headers: Object.fromEntries(headers().entries()),
+    cookies: Object.fromEntries(
+      cookies().getAll().map((c) => [c.name, c.value])
+    ),
+  };
+
+  const token = await getToken({
+    req: req as any,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  const userId = token?.id as string | undefined;
+  const userEmail = token?.email as string | undefined;
+
+  if (!userId) {
+    return (
+      <div className="px-6 py-8 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Debug: No token</h1>
+        <pre className="text-xs bg-muted p-4 rounded overflow-auto">
+          {JSON.stringify({
+            id,
+            token: token ? "exists" : "null",
+            tokenKeys: token ? Object.keys(token) : [],
+            hasSecret: !!process.env.NEXTAUTH_SECRET,
+            cookieNames: cookies().getAll().map((c) => c.name),
+          }, null, 2)}
+        </pre>
+      </div>
+    );
+  }
+
   let script: any = null;
   let dbError: string | null = null;
 
@@ -21,31 +52,18 @@ export default async function ScriptDetailPage({ params }: { params: Promise<{ i
     dbError = err?.message || String(err);
   }
 
-  // If not authenticated, show debug info
-  if (!user?.id) {
-    return (
-      <div className="px-6 py-8 max-w-2xl mx-auto">
-        <h1 className="text-2xl font-bold mb-4">Debug: No session</h1>
-        <pre className="text-xs bg-muted p-4 rounded overflow-auto">
-          {JSON.stringify({ id, session: session ? "exists" : "null", user: user ? "exists" : "null", dbError }, null, 2)}
-        </pre>
-      </div>
-    );
-  }
-
-  // If script not found or doesn't belong to user, show debug info
-  if (!script || script.authorId !== user.id) {
+  if (!script || script.authorId !== userId) {
     return (
       <div className="px-6 py-8 max-w-2xl mx-auto">
         <h1 className="text-2xl font-bold mb-4">Debug: Script not accessible</h1>
         <pre className="text-xs bg-muted p-4 rounded overflow-auto">
           {JSON.stringify({
             id,
-            userId: user.id,
-            userEmail: user.email,
+            userId,
+            userEmail,
             scriptFound: !!script,
             scriptAuthorId: script?.authorId ?? null,
-            authorMatch: script ? script.authorId === user.id : false,
+            authorMatch: script ? script.authorId === userId : false,
             dbError,
           }, null, 2)}
         </pre>
