@@ -77,23 +77,28 @@ export const authOptions: NextAuthOptions = {
               const email = credentials.email.toLowerCase().trim();
               const name = credentials.name?.trim() || email.split("@")[0];
 
-              try {
-                const user = await db.user.upsert({
-                  where: { email },
-                  update: { name },
-                  create: { email, name, emailVerified: new Date() },
-                });
-                // Verify the user actually exists in the DB before returning
-                if (!user.id || user.id.startsWith("transient_")) {
-                  throw new Error("User upsert returned invalid ID");
+              // Try upsert. If it fails, try once more (handles race conditions + transient errors).
+              for (let attempt = 1; attempt <= 2; attempt++) {
+                try {
+                  const user = await db.user.upsert({
+                    where: { email },
+                    update: { name },
+                    create: { email, name, emailVerified: new Date() },
+                  });
+                  if (user?.id && !user.id.startsWith("transient_")) {
+                    return { id: user.id, email: user.email || email, name: user.name || name } as any;
+                  }
+                  console.warn(`[auth] attempt ${attempt}: upsert returned invalid user`, user);
+                } catch (err) {
+                  console.error(`[auth] attempt ${attempt} failed:`, err);
                 }
-                return { id: user.id, email: user.email, name: user.name } as any;
-              } catch (err) {
-                console.error("[auth] DB upsert failed:", err);
-                // Don't return a transient user — that causes FK violations later.
-                // Return null so NextAuth shows an error instead of silent failure.
-                return null;
+                // Brief pause before retry
+                if (attempt < 2) await new Promise((r) => setTimeout(r, 500));
               }
+
+              // All attempts failed — return null (user sees signin error)
+              console.error("[auth] all upsert attempts failed for", email);
+              return null;
             },
           }),
         ]
