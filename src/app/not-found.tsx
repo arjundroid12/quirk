@@ -48,12 +48,14 @@ export default function NotFound() {
             </div>
           </div>
         </div>
-        {/* Right: Illustration */}
-        <div className="hidden lg:flex items-center justify-center bg-brand/5 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid opacity-20" />
-          <div className="relative max-w-md p-12">
+        {/* Right: Illustration background */}
+        <div className="hidden lg:flex items-center justify-center relative overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/art-mental.avif" alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-br from-brand/50 to-purple-600/40" />
+          <div className="relative max-w-sm p-12">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/art-vision.avif" alt="Abstract vision art" className="w-full h-auto rounded-2xl shadow-xl" />
+            <img src="/art-vision.avif" alt="Abstract vision art" className="w-full h-auto rounded-2xl shadow-2xl" />
           </div>
         </div>
       </main>

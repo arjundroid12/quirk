@@ -80,9 +80,13 @@ export default function WhatsNewPage() {
           </div>
         </section>
 
-        {/* Illustration section */}
-        <section className="py-24 border-t border-border/60">
-          <div className="mx-auto max-w-7xl px-6">
+        {/* Illustration section with full-bleed background */}
+        <section className="py-24 border-t border-border/60 relative overflow-hidden">
+          {/* Background art */}
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/art-summer.avif" alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/80 to-background/60" />
+          <div className="relative mx-auto max-w-7xl px-6">
             <div className="grid lg:grid-cols-2 gap-12 items-center">
               <div className="relative">
                 <div className="absolute inset-0 bg-brand/5 rounded-3xl blur-3xl" />

@@ -37,17 +37,15 @@ export default async function SignInPage({
             <SignInCard next={next} />
           </div>
         </div>
-        {/* Right: Illustration */}
-        <div className="hidden lg:flex items-center justify-center bg-brand/5 relative overflow-hidden">
-          <div className="absolute inset-0 bg-grid opacity-20" />
-          <div className="relative max-w-md p-12">
+        {/* Right: Illustration background */}
+        <div className="hidden lg:flex items-center justify-center relative overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/art-summer.avif" alt="" className="absolute inset-0 w-full h-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-br from-brand/40 to-brand-pink/30" />
+          <div className="relative max-w-md p-12 text-center">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/art-tech.avif"
-              alt="Creator using QUIRK"
-              className="w-full h-auto rounded-2xl shadow-xl"
-            />
-            <p className="mt-6 text-center text-sm text-muted-foreground italic">
+            <img src="/art-tech.avif" alt="Creator using QUIRK" className="w-full h-auto rounded-2xl shadow-2xl" />
+            <p className="mt-6 text-center text-sm text-white/90 italic font-medium">
               "8 AI tools. One workspace. From idea to script in 60 seconds."
             </p>
           </div>
