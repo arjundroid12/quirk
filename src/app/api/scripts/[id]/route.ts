@@ -19,14 +19,33 @@ const UpdateScriptSchema = z.object({
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    console.log("[scripts GET /id] looking for script:", id);
-    const script = await db.script.findUnique({ where: { id } });
-    console.log("[scripts GET /id] found:", !!script, script ? `title=${script.title}` : "");
-    if (!script) return NextResponse.json({ ok: false, error: "Not found", debug: { id } }, { status: 404 });
-    return NextResponse.json({ ok: true, script });
+    // Direct Turso query to debug
+    const url = process.env.DATABASE_URL?.replace("libsql://", "https://");
+    const token = process.env.LIBSQL_TOKEN;
+    const sql = "SELECT * FROM Script WHERE id = ?";
+    const body = { requests: [{ type: "execute", stmt: { sql, args: [{ type: "text", value: id }] } }] };
+
+    const res = await fetch(`${url}/v2/pipeline`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+
+    const data = await res.json();
+    return NextResponse.json({
+      ok: true,
+      debug: {
+        url: url?.slice(0, 40),
+        status: res.status,
+        resultType: data.results?.[0]?.type,
+        hasResult: !!data.results?.[0]?.response?.result,
+        rowsCount: data.results?.[0]?.response?.result?.rows?.length,
+        firstRow: data.results?.[0]?.response?.result?.rows?.[0]?.slice(0, 3),
+        error: data.results?.[0]?.error,
+      },
+    });
   } catch (err: any) {
-    console.error("[scripts GET /id] error:", err);
-    return NextResponse.json({ ok: false, error: err?.message, stack: err?.stack?.split('\n').slice(0,3) }, { status: 500 });
+    return NextResponse.json({ ok: false, error: err?.message }, { status: 500 });
   }
 }
 
