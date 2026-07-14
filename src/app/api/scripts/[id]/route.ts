@@ -19,12 +19,33 @@ const UpdateScriptSchema = z.object({
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
+
+    // Method 1: Use db.script.findUnique
     const script = await db.script.findUnique({ where: { id } });
-    if (!script) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-    return NextResponse.json({ ok: true, script });
+
+    // Method 2: Raw fetch (this works)
+    const rawUrl = process.env.DATABASE_URL?.replace("libsql://", "https://");
+    const rawToken = process.env.LIBSQL_TOKEN;
+    const rawRes = await fetch(`${rawUrl}/v2/pipeline`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${rawToken}` },
+      body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql: "SELECT id, title FROM Script WHERE id = ?", args: [{ type: "text", value: id }] } }] }),
+    });
+    const rawData = await rawRes.json();
+    const rawRows = rawData.results?.[0]?.response?.result?.rows?.length || 0;
+
+    return NextResponse.json({
+      ok: true,
+      debug: {
+        method1_findUnique: !!script,
+        method2_rawRows: rawRows,
+        dbUrl: process.env.DATABASE_URL?.slice(0, 50),
+        hasToken: !!process.env.LIBSQL_TOKEN,
+      },
+      script: script || null,
+    });
   } catch (err: any) {
-    console.error("[scripts GET /id] error:", err);
-    return NextResponse.json({ ok: false, error: err?.message }, { status: 500 });
+    return NextResponse.json({ ok: false, error: err?.message, stack: err?.stack?.split('\n').slice(0,3) }, { status: 500 });
   }
 }
 
