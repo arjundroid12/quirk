@@ -126,15 +126,30 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
 /** Execute a query and return rows as plain objects. */
 export async function query<T = Row>(sql: string, args: any[] = []): Promise<T[]> {
   const response = await executePipeline([{ sql, args }]);
-  const result = response.results?.[0]?.response?.result;
+
+  // Log the raw response structure for debugging
+  const firstResult = response.results?.[0];
+  console.log("[db] query raw response keys:", Object.keys(firstResult || {}));
+  console.log("[db] query firstResult.type:", firstResult?.type);
+  console.log("[db] query firstResult.response keys:", firstResult?.response ? Object.keys(firstResult.response) : "no response");
+  console.log("[db] query firstResult.response.type:", firstResult?.response?.type);
+  console.log("[db] query firstResult.response.result keys:", firstResult?.response?.result ? Object.keys(firstResult.response.result) : "no result");
+
+  const result = firstResult?.response?.result;
   if (!result) {
-    console.error("[db] query: no result in response", JSON.stringify(response).slice(0, 300));
+    console.error("[db] query: no result in response");
     return [];
   }
+
+  console.log("[db] query result.rows type:", typeof result.rows, "length:", result.rows?.length);
+  console.log("[db] query result.columns type:", typeof result.columns, "length:", result.columns?.length);
+
   if (!result.rows || !result.columns) {
-    console.error("[db] query: no rows/columns in result", JSON.stringify(result).slice(0, 300));
+    console.error("[db] query: no rows/columns in result");
     return [];
   }
+
+  console.log("[db] query returning", result.rows.length, "rows");
   return result.rows.map((raw) => parseRow(result.columns!, raw)) as T[];
 }
 
