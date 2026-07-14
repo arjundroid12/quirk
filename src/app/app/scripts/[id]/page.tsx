@@ -1,39 +1,63 @@
-import { notFound } from "next/navigation";
-import { getToken } from "next-auth/jwt";
-import { headers, cookies } from "next/headers";
-import { db } from "@/lib/db";
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { ScriptEditor } from "@/components/script-studio/script-editor";
+import { Loader2 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
-export default async function ScriptDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function ScriptDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const [script, setScript] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Next.js 16: cookies() and headers() are async
-  const [cookieStore, headerStore] = await Promise.all([cookies(), headers()]);
+  useEffect(() => {
+    (async () => {
+      const { id } = await params;
+      try {
+        const res = await fetch(`/api/scripts/${id}`);
+        if (!res.ok) {
+          if (res.status === 401) setError("Please sign in to view this script");
+          else if (res.status === 404) setError("Script not found");
+          else setError("Failed to load script");
+          setLoading(false);
+          return;
+        }
+        const data = await res.json();
+        if (data.ok) {
+          setScript(data.script);
+        } else {
+          setError(data.error || "Failed to load script");
+        }
+      } catch (err: any) {
+        setError(err?.message || "Network error");
+      }
+      setLoading(false);
+    })();
+  }, []);
 
-  // Build the cookie header string that getToken expects
-  const allCookies = cookieStore.getAll();
-  const cookieStr = allCookies.map((c) => `${c.name}=${c.value}`).join("; ");
-
-  // getToken needs req.headers.cookie (string format)
-  const token = await getToken({
-    req: { headers: { cookie: cookieStr } } as any,
-    secret: process.env.NEXTAUTH_SECRET,
-  });
-
-  if (!token?.id) {
-    notFound();
+  if (loading) {
+    return (
+      <div className="px-6 py-20 max-w-5xl mx-auto flex items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
-  const script = await db.script.findUnique({ where: { id } });
-  if (!script || script.authorId !== token.id) {
-    notFound();
+  if (error) {
+    return (
+      <div className="px-6 py-20 max-w-5xl mx-auto text-center">
+        <p className="text-muted-foreground">{error}</p>
+      </div>
+    );
   }
+
+  if (!script) return null;
 
   return (
     <div className="px-6 lg:px-10 py-8 max-w-5xl mx-auto">
-      <ScriptEditor script={script as any} />
+      <ScriptEditor script={script} />
     </div>
   );
 }
