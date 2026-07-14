@@ -1,21 +1,8 @@
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { IdeaEngine } from "@/components/idea-engine/idea-engine";
 
-export default async function IdeasPage() {
-  const session = await getServerSession(authOptions);
-  const user = session?.user as any;
-  const ideas = await db.idea.findMany({
-    where: { authorId: user?.id },
-    orderBy: { createdAt: "desc" },
-    take: 200,
-  });
-  const serialized = ideas.map((i) => ({
-    ...i,
-    createdAt: i.createdAt.toISOString(),
-    updatedAt: i.updatedAt.toISOString(),
-  }));
+export const dynamic = "force-dynamic";
+
+export default function IdeasPage() {
   return (
     <div className="px-6 lg:px-10 py-8 max-w-7xl mx-auto">
       <div className="mb-8">
@@ -24,9 +11,12 @@ export default async function IdeasPage() {
           Idea Engine
         </div>
         <h1 className="font-display text-3xl font-bold tracking-tight">Never run out of ideas.</h1>
-        <p className="mt-2 text-muted-foreground max-w-2xl">Tell us your niche, platform, and tone. We'll generate 8 scroll-stopping content ideas you can save to your bank, mark as filmed, published, or killed.</p>
+        <p className="mt-2 text-muted-foreground max-w-2xl">
+          Tell us your niche, platform, and tone. We'll generate 8 scroll-stopping content ideas
+          you can save to your bank, mark as filmed, published, or killed.
+        </p>
       </div>
-      <IdeaEngine initialIdeas={serialized as any} />
+      <IdeaEngine initialIdeas={[]} />
     </div>
   );
 }
