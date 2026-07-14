@@ -102,7 +102,23 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
     throw new Error(`Turso API ${res.status}: ${text}`);
   }
 
-  return res.json();
+  const data = await res.json();
+
+  // Check for Turso-level errors in each result
+  for (const result of data.results || []) {
+    if (result.error) {
+      throw new Error(`Turso error: ${result.error}`);
+    }
+    if (result.response?.error) {
+      throw new Error(`Turso response error: ${result.response.error}`);
+    }
+    // Some errors come as type "error" instead of "ok"
+    if (result.type === "error") {
+      throw new Error(`Turso result error: ${result.error || JSON.stringify(result)}`);
+    }
+  }
+
+  return data;
 }
 
 /** Execute a query and return rows as plain objects. */

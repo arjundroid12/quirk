@@ -83,14 +83,16 @@ export const authOptions: NextAuthOptions = {
                   update: { name },
                   create: { email, name, emailVerified: new Date() },
                 });
+                // Verify the user actually exists in the DB before returning
+                if (!user.id || user.id.startsWith("transient_")) {
+                  throw new Error("User upsert returned invalid ID");
+                }
                 return { id: user.id, email: user.email, name: user.name } as any;
               } catch (err) {
-                console.warn("[auth] DB upsert failed:", err);
-                return {
-                  id: `transient_${crypto.randomUUID()}`,
-                  email,
-                  name,
-                } as any;
+                console.error("[auth] DB upsert failed:", err);
+                // Don't return a transient user — that causes FK violations later.
+                // Return null so NextAuth shows an error instead of silent failure.
+                return null;
               }
             },
           }),
