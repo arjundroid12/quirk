@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/db";
+import { db, queryOne } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { z } from "zod";
 
@@ -19,25 +19,17 @@ const UpdateScriptSchema = z.object({
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    console.error("[scripts GET /id] id:", id, "type:", typeof id);
+    console.error("[scripts GET /id] id:", id);
 
-    // Method 1: Use db.script.findUnique
-    const script = await db.script.findUnique({ where: { id } });
-    console.error("[scripts GET /id] findUnique result:", !!script, script?.id);
+    // Bypass db.script.findUnique — call queryOne directly
+    const script = await queryOne<any>("SELECT * FROM Script WHERE id = ?", [id]);
+    console.error("[scripts GET /id] queryOne result:", !!script, script?.id);
 
-    return NextResponse.json({
-      ok: true,
-      debug: {
-        id,
-        idType: typeof id,
-        method1_findUnique: !!script,
-        scriptId: script?.id,
-      },
-      script: script || null,
-    });
+    if (!script) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    return NextResponse.json({ ok: true, script });
   } catch (err: any) {
     console.error("[scripts GET /id] ERROR:", err);
-    return NextResponse.json({ ok: false, error: err?.message, stack: err?.stack?.split('\n').slice(0,3) }, { status: 500 });
+    return NextResponse.json({ ok: false, error: err?.message }, { status: 500 });
   }
 }
 
