@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
-export const maxDuration = 60;
 import { db } from "@/lib/db";
 import { getSession } from "@/lib/session";
 import { generateScript, type ScriptGenInput } from "@/lib/zai";
 import { z } from "zod";
+
+export const maxDuration = 60;
+export const dynamic = "force-dynamic";
 
 const CreateScriptSchema = z.object({
   niche: z.string().min(2).max(80),
@@ -18,15 +19,22 @@ const CreateScriptSchema = z.object({
 });
 
 export async function POST(req: Request) {
+  const encoder = new TextEncoder();
+
+  const send = (data: any) =>
+    new Response(encoder.encode(JSON.stringify(data)), {
+      headers: { "Content-Type": "application/json" },
+    });
+
   try {
     const session = await getSession();
-    if (!session?.user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return send({ ok: false, error: "Unauthorized" });
     const userId = (session.user as any).id as string;
-    if (!userId) return NextResponse.json({ ok: false, error: "No user id" }, { status: 401 });
+    if (!userId) return send({ ok: false, error: "No user id" });
 
     const body = await req.json();
     const parsed = CreateScriptSchema.safeParse(body);
-    if (!parsed.success) return NextResponse.json({ ok: false, error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
+    if (!parsed.success) return send({ ok: false, error: "Invalid input", details: parsed.error.flatten() });
     const input = parsed.data;
 
     let title = input.title ?? "";
@@ -57,22 +65,22 @@ export async function POST(req: Request) {
         cta: cta || null, tags: hashtags.join(","), authorId: userId,
       },
     });
-    return NextResponse.json({ ok: true, script });
+    return send({ ok: true, script });
   } catch (err: any) {
     console.error("[scripts POST] error", err);
-    return NextResponse.json({ ok: false, error: err?.message ?? "Server error" }, { status: 500 });
+    return send({ ok: false, error: err?.message ?? "Server error" });
   }
 }
 
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session?.user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    if (!session?.user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     const userId = (session.user as any).id as string;
     const scripts = await db.script.findMany({ where: { authorId: userId }, orderBy: { createdAt: "desc" }, take: 100 });
-    return NextResponse.json({ ok: true, scripts });
+    return Response.json({ ok: true, scripts });
   } catch (err: any) {
     console.error("[scripts GET] error", err);
-    return NextResponse.json({ ok: false, error: err?.message ?? "Server error" }, { status: 500 });
+    return Response.json({ ok: false, error: err?.message ?? "Server error" }, { status: 500 });
   }
 }
