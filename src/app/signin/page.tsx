@@ -30,9 +30,27 @@ export default async function SignInPage({
           </Link>
         </div>
       </header>
-      <main className="flex-1 flex items-center justify-center px-6 py-12">
-        <div className="w-full max-w-md">
-          <SignInCard next={next} />
+      <main className="flex-1 grid lg:grid-cols-2">
+        {/* Left: Sign-in form */}
+        <div className="flex items-center justify-center px-6 py-12">
+          <div className="w-full max-w-md">
+            <SignInCard next={next} />
+          </div>
+        </div>
+        {/* Right: Illustration */}
+        <div className="hidden lg:flex items-center justify-center bg-brand/5 relative overflow-hidden">
+          <div className="absolute inset-0 bg-grid opacity-20" />
+          <div className="relative max-w-md p-12">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/art-tech.avif"
+              alt="Creator using QUIRK"
+              className="w-full h-auto rounded-2xl shadow-xl"
+            />
+            <p className="mt-6 text-center text-sm text-muted-foreground italic">
+              "8 AI tools. One workspace. From idea to script in 60 seconds."
+            </p>
+          </div>
         </div>
       </main>
     </div>

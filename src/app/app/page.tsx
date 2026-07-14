@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PenLine, Lightbulb, ImagePlus, ArrowRight, Sparkles, Plus, Loader2, Wrench } from "lucide-react";
+import { PenLine, Lightbulb, ImagePlus, ArrowRight, Sparkles, Plus, Loader2, Wrench, Calendar } from "lucide-react";
 
 interface ScriptData {
   id: string;
@@ -126,6 +126,20 @@ export default function AppDashboard() {
           <h3 className="mt-4 font-display font-bold">AI Tools <span className="text-xs text-brand">NEW</span></h3>
           <p className="mt-1 text-sm text-muted-foreground">Script Scorer, Repurposer, Hashtags, Hooks.</p>
           <span className="mt-3 inline-block text-xs font-mono uppercase tracking-widest text-brand">4 tools →</span>
+        </Link>
+      </div>
+
+      {/* Calendar link */}
+      <div className="mt-4">
+        <Link href="/app/calendar" className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-5 hover:border-brand/40 transition-all">
+          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white">
+            <Calendar className="h-5 w-5" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-display font-bold">Content Calendar</h3>
+            <p className="text-sm text-muted-foreground">Visual month view — track scripts from draft to published</p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
         </Link>
       </div>
 

@@ -13,6 +13,10 @@ import {
   Youtube,
   CheckCircle2,
   Wand2,
+  TrendingUp,
+  Scissors,
+  Hash,
+  Zap,
 } from "lucide-react";
 import { WaitlistForm } from "@/components/landing/waitlist-form";
 import { Navbar } from "@/components/landing/navbar";
@@ -23,29 +27,57 @@ const features = [
     icon: PenLine,
     name: "Script Studio",
     tag: "Writes with you",
-    desc: "AI scripts for Reels, Shorts, TikTok, and long-form. Hook templates, platform-native pacing, CTAs that don't feel salesy. Edit inline with one click.",
+    desc: "AI scripts for Reels, Shorts, TikTok, and long-form. Platform-native pacing, CTAs that don't feel salesy. Edit inline with one click.",
     color: "from-violet-500 to-fuchsia-500",
   },
   {
     icon: Wand2,
     name: "Humanizer",
     tag: "Bypasses AI detection",
-    desc: "One click rewrites your script to evade Sapling, CopyLeaks, Quillbot, and Scribbr. Short sentences, natural rhythm, zero AI vocabulary. Your scripts read like a human wrote them.",
+    desc: "One click rewrites your script to evade Sapling, CopyLeaks, Quillbot, and Scribbr. Short sentences, natural rhythm, zero AI vocabulary.",
     color: "from-purple-500 to-violet-500",
   },
   {
     icon: Lightbulb,
     name: "Idea Engine",
     tag: "Kills blank-page syndrome",
-    desc: "Daily content ideas tuned to your niche and the platform you post on. Save them to your bank, mark as filmed, published, or killed.",
+    desc: "Daily content ideas tuned to your niche and platform. Save to your bank, mark as filmed, published, or killed.",
     color: "from-fuchsia-500 to-rose-500",
   },
   {
     icon: ImagePlus,
     name: "Thumbnail Tester",
-    tag: "Stop guessing, start knowing",
-    desc: "Upload 2-3 thumbnails. AI scores them on composition, emotion, text legibility, and predicted CTR — then picks the winner with reasoning.",
+    tag: "Stop guessing",
+    desc: "Upload 2-3 thumbnails. AI scores composition, emotion, text legibility, and predicted CTR — then picks the winner.",
     color: "from-rose-500 to-orange-500",
+  },
+  {
+    icon: TrendingUp,
+    name: "Script Scorer",
+    tag: "Rate before you film",
+    desc: "AI rates your script on hook strength, pacing, CTA, and retention prediction. Get a score + specific improvements before you waste time filming.",
+    color: "from-emerald-500 to-teal-500",
+  },
+  {
+    icon: Scissors,
+    name: "Content Repurposer",
+    tag: "1 → many",
+    desc: "Paste long-form content. AI extracts 3-5 short-form clips with hooks, bodies, and CTAs — each ready to film. Turn one video into a week of content.",
+    color: "from-blue-500 to-cyan-500",
+  },
+  {
+    icon: Hash,
+    name: "Hashtag Generator",
+    tag: "3-tier strategy",
+    desc: "Get primary, secondary, and trending hashtags for any topic. AI explains the strategy behind each pick. Copy all with one click.",
+    color: "from-fuchsia-500 to-pink-500",
+  },
+  {
+    icon: Zap,
+    name: "Hook Generator",
+    tag: "10 psychological triggers",
+    desc: "Generate 3-10 hook variations using different psychological triggers — curiosity gap, bold claim, story setup, stat shock, and more.",
+    color: "from-amber-500 to-orange-500",
   },
 ];
 
@@ -183,7 +215,7 @@ export default function LandingPage() {
             <div className="text-center max-w-2xl mx-auto">
               <span className="inline-flex items-center gap-2 text-xs font-mono uppercase tracking-widest text-brand">
                 <span className="h-1.5 w-1.5 rounded-full bg-brand-pink" />
-                Three tools. One workspace.
+                Eight tools. One workspace.
               </span>
               <h2 className="mt-4 font-display text-3xl sm:text-4xl font-bold tracking-tight">
                 The AI-native creator workspace
@@ -193,7 +225,7 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="mt-16 grid gap-6 lg:grid-cols-3">
+            <div className="mt-16 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
               {features.map((f, i) => (
                 <div
                   key={f.name}
@@ -351,7 +383,9 @@ export default function LandingPage() {
               <h4 className="text-sm font-semibold text-white/90">Product</h4>
               <ul className="mt-4 space-y-2 text-sm text-white/60">
                 <li><Link href="/#features" className="hover:text-white transition">Features</Link></li>
+                <li><Link href="/whats-new" className="hover:text-white transition">What's new</Link></li>
                 <li><Link href="/app/scripts" className="hover:text-white transition">Script Studio</Link></li>
+                <li><Link href="/app/tools" className="hover:text-white transition">AI Tools</Link></li>
                 <li><Link href="/signin" className="hover:text-white transition">Sign in</Link></li>
                 <li><Link href="/#waitlist" className="hover:text-white transition">Waitlist</Link></li>
               </ul>
