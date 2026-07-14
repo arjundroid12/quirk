@@ -103,52 +103,14 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
   }
 
   const data = await res.json();
-
-  // Check for Turso-level errors in each result
-  for (const result of data.results || []) {
-    if (result.error) {
-      const errMsg = typeof result.error === 'string' ? result.error : (result.error as any)?.message || JSON.stringify(result.error);
-      throw new Error(`Turso error: ${errMsg}`);
-    }
-    if (result.response?.error) {
-      throw new Error(`Turso response error: ${result.response.error}`);
-    }
-    // Some errors come as type "error" instead of "ok"
-    if (result.type === "error") {
-      const errMsg = typeof result.error === 'string' ? result.error : (result.error as any)?.message || JSON.stringify(result);
-      throw new Error(`Turso result error: ${errMsg}`);
-    }
-  }
-
   return data;
 }
 
 /** Execute a query and return rows as plain objects. */
 export async function query<T = Row>(sql: string, args: any[] = []): Promise<T[]> {
   const response = await executePipeline([{ sql, args }]);
-
-  // Log the raw response structure for debugging
-  const firstResult = response.results?.[0];
-  console.error("[db] query raw firstResult keys:", Object.keys(firstResult || {}));
-  console.error("[db] query firstResult.type:", firstResult?.type);
-  console.error("[db] query firstResult.response keys:", firstResult?.response ? Object.keys(firstResult.response) : "no response");
-  console.error("[db] query firstResult.response.result keys:", firstResult?.response?.result ? Object.keys(firstResult.response.result) : "no result");
-
-  const result = firstResult?.response?.result;
-  if (!result) {
-    console.error("[db] query: no result in response");
-    return [];
-  }
-
-  console.error("[db] query result.rows type:", typeof result.rows, "isArray:", Array.isArray(result.rows), "length:", result.rows?.length);
-  console.error("[db] query result.columns type:", typeof result.columns, "isArray:", Array.isArray(result.columns), "length:", result.columns?.length);
-
-  if (!result.rows || !result.columns) {
-    console.error("[db] query: no rows/columns in result — rows:", JSON.stringify(result.rows)?.slice(0,100), "cols:", JSON.stringify(result.columns)?.slice(0,100));
-    return [];
-  }
-
-  console.error("[db] query returning", result.rows.length, "rows");
+  const result = response.results?.[0]?.response?.result;
+  if (!result || !result.rows || !result.columns) return [];
   return result.rows.map((raw) => parseRow(result.columns!, raw)) as T[];
 }
 
