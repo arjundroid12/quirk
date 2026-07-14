@@ -121,11 +121,43 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
 /** Execute a query and return rows as plain objects. */
 export async function query<T = Row>(sql: string, args: any[] = []): Promise<T[]> {
   try {
-    const response = await executePipeline([{ sql, args }]);
-    const result = response.results?.[0]?.response?.result;
+    // Direct fetch — same as the working raw test
+    const url = process.env.DATABASE_URL?.replace("libsql://", "https://") + "/v2/pipeline";
+    const token = process.env.LIBSQL_TOKEN;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        requests: [{
+          type: "execute",
+          stmt: {
+            sql,
+            args: args.map((arg: any) => {
+              if (arg === null || arg === undefined) return { type: "null" };
+              if (typeof arg === "number") return { type: "float", value: arg };
+              if (typeof arg === "boolean") return { type: "integer", value: arg ? 1 : 0 };
+              if (arg instanceof Date) return { type: "text", value: arg.toISOString() };
+              return { type: "text", value: String(arg) };
+            }),
+          },
+        }],
+      }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => res.statusText);
+      throw new Error(`Turso API ${res.status}: ${text}`);
+    }
+
+    const data = await res.json();
+    const result = data.results?.[0]?.response?.result;
     if (!result || !result.rows || !result.columns) return [];
-    return result.rows.map((raw) => parseRow(result.columns!, raw)) as T[];
-  } catch (err) {
+    return result.rows.map((raw: any) => parseRow(result.columns, raw)) as T[];
+  } catch (err: any) {
     console.error("[db query] ERROR:", err?.message || err, "sql:", sql.slice(0, 80), "args:", JSON.stringify(args).slice(0, 100));
     return [];
   }
