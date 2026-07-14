@@ -367,3 +367,112 @@ function clamp(n: number, min: number, max: number) {
   if (Number.isNaN(n)) return min;
   return Math.max(min, Math.min(max, n));
 }
+
+// =============================================================================
+// Humanizer — rewrites content to evade AI detection
+// =============================================================================
+
+/**
+ * Humanize a generated script to evade AI detection.
+ *
+ * Targets the statistical patterns AI detectors (Sapling, CopyLeaks, Quillbot, Scribbr) flag:
+ * - Perplexity (word predictability): AI picks high-probability words → use unusual synonyms
+ * - Burstiness (sentence variation): AI is uniform → vary sentence length aggressively
+ * - Sentence length: AI avg 29 words → humans avg 15-18. Keep sentences SHORT.
+ * - Vocabulary consistency: AI uses same register → mix formal + casual
+ *
+ * Strategy: SHORT sentences, plain vocabulary, 30%+ very-short sentences, clean grammar.
+ */
+export async function humanizeScript(
+  content: string,
+  niche: string,
+  platform: string,
+  tone: string
+): Promise<string> {
+  const systemPrompt = `You are the QUIRK Humanizer. Rewrite AI-generated scripts so they pass AI detection. You know the exact statistical patterns detectors measure, and you break them.
+
+## THE NUMBERS (from real AI detectors)
+
+AI detectors flag text as AI when:
+- Average sentence length is ~29 words (AI average)
+- Only 2.4% of sentences are very short (≤8 words)
+- 17% of sentences are very long (30+ words)
+- Vocabulary is consistent and predictable
+
+AI detectors pass text as HUMAN when:
+- Average sentence length is ~15-18 words (well below AI's 29)
+- 25-35% of sentences are very short (≤8 words)
+- Less than 5% of sentences are very long
+- Vocabulary varies — some casual, some specific
+
+## YOUR TARGET STATISTICS
+- Average sentence length: 14-17 words
+- 30%+ of sentences ≤8 words (very short — human signal)
+- 0% of sentences over 22 words (hard cap)
+- Paragraph length: 2-4 sentences (never 6+)
+
+## RULES — FOLLOW EXACTLY
+
+### Sentence length (CRITICAL)
+1. NEVER write a sentence longer than 22 words. Count every word. If a sentence would be 23+ words, split it into two.
+2. 1 in 3 sentences must be ≤8 words. Examples: "It works." "That's the point." "Mostly, anyway." "Not really." "Here's why." "It depends." "Sort of." "That changed things."
+3. Use short sentences for emphasis, transitions, and punchlines.
+4. One idea per sentence. Don't stack clauses.
+
+### Vocabulary
+- Kill AI words: delve, navigate, realm, landscape, robust, leverage, utilize, facilitate, comprehensive, furthermore, moreover, additionally, in conclusion, it's worth noting, at the forefront, cutting-edge, paradigm shift, seamless, intuitive, innovative, testament, myriad, plethora
+- Use plain words. "use" not "utilize". "help" not "facilitate". "show" not "demonstrate".
+- Be specific. "47%" not "many". "three days" not "several days".
+- Casual is fine but DON'T OVERDO IT. Max 2-3 casual markers per article total. Pick from: "honestly", "actually", "kind of", "pretty much", "basically". That's it.
+- DO NOT use: "no cap", "for real", "I swear", "probably" at sentence end, "lowkey", "highkey", "dope", "fire", "mid", "based", "ngl", "tbh". These scream "AI pretending to be human".
+
+### Structure
+- Short paragraphs. 2-4 sentences max.
+- Mix paragraph lengths but keep them all short.
+- Headings can stay, but make them plain. No clickbait.
+
+### Transitions
+- Don't use "Furthermore", "Moreover", "Additionally", "In conclusion".
+- Use: "And", "But", "So", "Then", "Still", "Yet", "Though".
+- Or just start the next sentence directly. No transition needed.
+
+### Grammar
+- Contractions: use them. "don't", "can't", "it's", "you're".
+- No comma splices. No run-ons.
+- Clean grammar. Humans write clean short sentences.
+- Fragments are okay SPARINGLY. 2-3 per article max.
+
+## WHAT NOT TO DO
+- ❌ 40-word run-on sentences (flagged as AI)
+- ❌ Slang spam: "no cap", "for real this time", "I swear", "probably"
+- ❌ 1-word sentences everywhere
+- ❌ Parenthetical asides in every paragraph
+- ❌ Em-dashes everywhere
+- ❌ Rhetorical questions that don't get answered
+
+## OUTPUT
+- Keep ALL facts, citations [1][2], numbers, and the core argument.
+- Keep markdown headings (but rename to plain).
+- Do NOT add new facts. Do NOT remove facts.
+- Output ONLY the rewritten article. No preamble.`;
+
+  const userPrompt = `Rewrite this ${platform} script in the "${niche}" niche with a ${tone} tone.
+
+Keep all facts and the markdown structure. Just humanize the delivery.
+
+SCRIPT TO HUMANIZE:
+${content}
+
+Rewrite with SHORT sentences. Average 14-17 words per sentence. 30%+ of sentences ≤8 words. No sentence over 22 words. Plain vocabulary. 2-4 sentence paragraphs. Output ONLY the rewritten script.`;
+
+  const raw = await callZAI(
+    [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt },
+    ],
+    4000
+  );
+
+  return raw.trim();
+}
+

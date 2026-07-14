@@ -52,6 +52,7 @@ export function NewScriptForm() {
   const [topic, setTopic] = useState("");
   const [durationSec, setDurationSec] = useState("");
   const [cta, setCta] = useState("");
+  const [humanize, setHumanize] = useState(false);
   const [loading, setLoading] = useState(false);
   const [elapsed, setElapsed] = useState(0);
 
@@ -85,6 +86,7 @@ export function NewScriptForm() {
           durationSec: durationSec ? Number(durationSec) : null,
           cta: cta.trim() || null,
           generate: true,
+          humanize,
         }),
       });
 
@@ -226,6 +228,37 @@ export function NewScriptForm() {
             />
           </div>
         </div>
+      </div>
+
+      {/* Humanize toggle */}
+      <div className="rounded-2xl border border-brand/20 bg-brand/5 p-4">
+        <label className="flex items-start gap-3 cursor-pointer">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={humanize}
+            onClick={() => setHumanize(!humanize)}
+            className={cn(
+              "mt-0.5 relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors",
+              humanize ? "bg-brand" : "bg-muted"
+            )}
+          >
+            <span className={cn(
+              "inline-block h-4 w-4 transform rounded-full bg-white transition-transform",
+              humanize ? "translate-x-6" : "translate-x-1"
+            )} />
+          </button>
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <Wand2 className="h-4 w-4 text-brand" />
+              <span className="font-semibold text-sm">Humanize script</span>
+              <span className="text-xs px-2 py-0.5 rounded-full bg-brand/10 text-brand font-medium">BETA</span>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              Runs a second AI pass that rewrites the script to evade AI detection (Sapling, CopyLeaks, Quillbot). Uses short sentences, plain vocabulary, and natural rhythm. Adds ~30s to generation time.
+            </p>
+          </div>
+        </label>
       </div>
 
       {/* Submit */}

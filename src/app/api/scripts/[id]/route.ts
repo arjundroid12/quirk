@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { db, queryOne } from "@/lib/db";
-import { getSession } from "@/lib/session";
+import { getToken } from "next-auth/jwt";
+import { cookies } from "next/headers";
 import { z } from "zod";
 
 export const maxDuration = 60;
@@ -16,35 +16,66 @@ const UpdateScriptSchema = z.object({
   tags: z.string().optional().nullable(),
 });
 
+async function getAuthUserId(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const cookieStr = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  const token = await getToken({ req: { headers: { cookie: cookieStr } } as any, secret: process.env.NEXTAUTH_SECRET });
+  return (token?.id as string) || null;
+}
+
+function toArg(val: any) {
+  if (val === null || val === undefined) return { type: "null" };
+  if (typeof val === "number") return { type: "float", value: val };
+  if (typeof val === "boolean") return { type: "integer", value: val ? 1 : 0 };
+  if (val instanceof Date) return { type: "text", value: val.toISOString() };
+  return { type: "text", value: String(val) };
+}
+
+async function tursoFetch(sql: string, args: any[] = []) {
+  const url = process.env.DATABASE_URL!.replace("libsql://", "https://") + "/v2/pipeline";
+  const token = process.env.LIBSQL_TOKEN;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql, args: args.map(toArg) } }] }),
+  });
+  const data = await res.json();
+  const result = data.results?.[0]?.response?.result;
+  if (!result?.rows || !result.cols) return [];
+  return result.rows.map((raw: any[]) => {
+    const row: any = {};
+    result.cols.forEach((col: any, i: number) => { row[col.name] = raw[i]?.value ?? null; });
+    return row;
+  });
+}
+
+async function tursoExecute(sql: string, args: any[] = []) {
+  const url = process.env.DATABASE_URL!.replace("libsql://", "https://") + "/v2/pipeline";
+  const token = process.env.LIBSQL_TOKEN;
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql, args: args.map(toArg) } }] }),
+  });
+}
+
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-
-    // Direct Turso fetch — bypass db.ts abstractions (they were failing silently)
+    // Direct Turso fetch
     const url = process.env.DATABASE_URL?.replace("libsql://", "https://") + "/v2/pipeline";
     const token = process.env.LIBSQL_TOKEN;
-
     const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql: "SELECT * FROM Script WHERE id = ?", args: [{ type: "text", value: id }] } }] }),
     });
-
     const data = await res.json();
     const rows = data.results?.[0]?.response?.result?.rows || [];
     const cols = data.results?.[0]?.response?.result?.cols || [];
-
-    if (rows.length === 0) {
-      return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-    }
-
-    // Parse row manually
+    if (rows.length === 0) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
     const script: any = {};
-    cols.forEach((col: any, i: number) => {
-      const cell = rows[0][i];
-      script[col.name] = cell?.value ?? null;
-    });
-
+    cols.forEach((col: any, i: number) => { script[col.name] = rows[0][i]?.value ?? null; });
     return NextResponse.json({ ok: true, script });
   } catch (err: any) {
     console.error("[scripts GET /id] error:", err);
@@ -54,17 +85,24 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getSession();
-    if (!session?.user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    const userId = (session.user as any).id as string;
+    const userId = await getAuthUserId();
+    if (!userId) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     const { id } = await params;
-    const existing = await db.script.findUnique({ where: { id } });
-    if (!existing || existing.authorId !== userId) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    const existing = await tursoFetch("SELECT * FROM Script WHERE id = ?", [id]);
+    if (!existing.length || existing[0].authorId !== userId) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
     const body = await req.json();
     const parsed = UpdateScriptSchema.safeParse(body);
     if (!parsed.success) return NextResponse.json({ ok: false, error: "Invalid input", details: parsed.error.flatten() }, { status: 400 });
-    const script = await db.script.update({ where: { id }, data: parsed.data });
-    return NextResponse.json({ ok: true, script });
+    const sets: string[] = [];
+    const args: any[] = [];
+    for (const [k, v] of Object.entries(parsed.data)) {
+      if (v !== undefined) { sets.push(`${k} = ?`); args.push(v); }
+    }
+    sets.push("updatedAt = ?"); args.push(new Date().toISOString());
+    args.push(id);
+    await tursoExecute(`UPDATE Script SET ${sets.join(", ")} WHERE id = ?`, args);
+    const updated = await tursoFetch("SELECT * FROM Script WHERE id = ?", [id]);
+    return NextResponse.json({ ok: true, script: updated[0] });
   } catch (err: any) {
     console.error("[scripts PATCH] error", err);
     return NextResponse.json({ ok: false, error: err?.message }, { status: 500 });
@@ -73,13 +111,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
 export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getSession();
-    if (!session?.user) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    const userId = (session.user as any).id as string;
+    const userId = await getAuthUserId();
+    if (!userId) return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
     const { id } = await params;
-    const existing = await db.script.findUnique({ where: { id } });
-    if (!existing || existing.authorId !== userId) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
-    await db.script.delete({ where: { id } });
+    const existing = await tursoFetch("SELECT * FROM Script WHERE id = ?", [id]);
+    if (!existing.length || existing[0].authorId !== userId) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+    await tursoExecute("DELETE FROM Script WHERE id = ?", [id]);
     return NextResponse.json({ ok: true });
   } catch (err: any) {
     return NextResponse.json({ ok: false, error: err?.message }, { status: 500 });

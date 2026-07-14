@@ -1,6 +1,6 @@
-import { db } from "@/lib/db";
-import { getSession } from "@/lib/session";
-import { generateScript, type ScriptGenInput } from "@/lib/zai";
+import { getToken } from "next-auth/jwt";
+import { cookies } from "next/headers";
+import { generateScript, humanizeScript, type ScriptGenInput } from "@/lib/zai";
 import { z } from "zod";
 
 export const maxDuration = 60;
@@ -14,16 +14,61 @@ const CreateScriptSchema = z.object({
   durationSec: z.number().int().min(5).max(1800).optional().nullable(),
   cta: z.string().max(200).optional().nullable(),
   generate: z.boolean().default(true),
+  humanize: z.boolean().default(false),
   title: z.string().max(200).optional().nullable(),
   content: z.string().optional().nullable(),
 });
 
+async function getAuthUserId(): Promise<string | null> {
+  const cookieStore = await cookies();
+  const cookieStr = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
+  const token = await getToken({ req: { headers: { cookie: cookieStr } } as any, secret: process.env.NEXTAUTH_SECRET });
+  return (token?.id as string) || null;
+}
+
+function toArg(val: any) {
+  if (val === null || val === undefined) return { type: "null" };
+  if (typeof val === "number") return { type: "float", value: val };
+  if (typeof val === "boolean") return { type: "integer", value: val ? 1 : 0 };
+  if (val instanceof Date) return { type: "text", value: val.toISOString() };
+  return { type: "text", value: String(val) };
+}
+
+async function tursoFetch(sql: string, args: any[] = []) {
+  const url = process.env.DATABASE_URL!.replace("libsql://", "https://") + "/v2/pipeline";
+  const token = process.env.LIBSQL_TOKEN;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql, args: args.map(toArg) } }] }),
+  });
+  const data = await res.json();
+  const result = data.results?.[0]?.response?.result;
+  if (!result?.rows || !result.cols) return [];
+  return result.rows.map((raw: any[]) => {
+    const row: any = {};
+    result.cols.forEach((col: any, i: number) => { row[col.name] = raw[i]?.value ?? null; });
+    return row;
+  });
+}
+
+async function tursoExecute(sql: string, args: any[] = []) {
+  const url = process.env.DATABASE_URL!.replace("libsql://", "https://") + "/v2/pipeline";
+  const token = process.env.LIBSQL_TOKEN;
+  await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ requests: [{ type: "execute", stmt: { sql, args: args.map(toArg) } }] }),
+  });
+}
+
+function genId() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 10); }
+function now() { return new Date().toISOString(); }
+
 export async function POST(req: Request) {
   try {
-    const session = await getSession();
-    if (!session?.user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    const userId = (session.user as any).id as string;
-    if (!userId) return Response.json({ ok: false, error: "No user id in session" }, { status: 401 });
+    const userId = await getAuthUserId();
+    if (!userId) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json();
     const parsed = CreateScriptSchema.safeParse(body);
@@ -49,16 +94,19 @@ export async function POST(req: Request) {
         `**CTA:** ${gen.cta}`, "", `**Hashtags:** ${gen.hashtags.map((h) => "#" + h).join(" ")}`,
         "", `> Estimated duration: ${gen.estimatedDuration}`, `> ${gen.notes}`,
       ].join("\n");
+
+      // Optional humanizer pass — rewrites content to evade AI detection
+      if (input.humanize) {
+        content = await humanizeScript(content, input.niche, input.platform, input.tone);
+      }
     }
 
-    const script = await db.script.create({
-      data: {
-        title: title || "Untitled script", content,
-        platform: input.platform, tone: input.tone, niche: input.niche,
-        cta: cta || null, tags: hashtags.join(","), authorId: userId,
-      },
-    });
-    return Response.json({ ok: true, script });
+    const id = genId();
+    await tursoExecute(
+      "INSERT INTO Script (id, title, content, platform, tone, niche, cta, tags, authorId, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, title || "Untitled script", content, input.platform, input.tone, input.niche, cta || null, hashtags.join(","), userId, now(), now()]
+    );
+    return Response.json({ ok: true, script: { id, title, content, platform: input.platform, tone: input.tone, niche: input.niche, cta, tags: hashtags.join(","), authorId: userId, createdAt: now(), updatedAt: now() } });
   } catch (err: any) {
     console.error("[scripts POST] error", err);
     return Response.json({ ok: false, error: err?.message ?? "Server error" }, { status: 500 });
@@ -67,10 +115,9 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
-    const session = await getSession();
-    if (!session?.user) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
-    const userId = (session.user as any).id as string;
-    const scripts = await db.script.findMany({ where: { authorId: userId }, orderBy: { createdAt: "desc" }, take: 100 });
+    const userId = await getAuthUserId();
+    if (!userId) return Response.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    const scripts = await tursoFetch("SELECT * FROM Script WHERE authorId = ? ORDER BY createdAt DESC LIMIT 100", [userId]);
     return Response.json({ ok: true, scripts });
   } catch (err: any) {
     console.error("[scripts GET] error", err);
