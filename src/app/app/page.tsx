@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { PenLine, Lightbulb, ImagePlus, ArrowRight, Sparkles, Plus, Loader2 } from "lucide-react";
+import { PenLine, Lightbulb, ImagePlus, ArrowRight, Sparkles, Plus, Loader2, Wrench } from "lucide-react";
 
 interface ScriptData {
   id: string;
@@ -84,14 +84,14 @@ export default function AppDashboard() {
       </div>
 
       {/* Feature cards */}
-      <div className="mt-10 grid gap-4 sm:grid-cols-3">
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link href="/app/scripts/new" className="group relative overflow-hidden rounded-2xl border border-border bg-card p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand/5">
           <div className="flex items-center justify-between">
             <div className="h-11 w-11 rounded-xl brand-gradient flex items-center justify-center text-white"><PenLine className="h-5 w-5" /></div>
             <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </div>
           <h3 className="mt-4 font-display font-bold">Script Studio</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Generate a script with platform-native hooks, pacing, and CTAs.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Generate scripts with hooks, pacing, and CTAs.</p>
           <span className="mt-3 inline-block text-xs font-mono uppercase tracking-widest text-brand">
             {scripts.length > 0 ? `${scripts.length} scripts →` : "Live now →"}
           </span>
@@ -102,7 +102,7 @@ export default function AppDashboard() {
             <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </div>
           <h3 className="mt-4 font-display font-bold">Idea Engine</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Generate 8 scroll-stopping ideas tuned to your niche.</p>
+          <p className="mt-1 text-sm text-muted-foreground">8 scroll-stopping ideas tuned to your niche.</p>
           <span className="mt-3 inline-block text-xs font-mono uppercase tracking-widest text-brand">
             {ideasCount > 0 ? `${ideasCount} in bank →` : "Live now →"}
           </span>
@@ -113,10 +113,19 @@ export default function AppDashboard() {
             <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
           </div>
           <h3 className="mt-4 font-display font-bold">Thumbnail Tester</h3>
-          <p className="mt-1 text-sm text-muted-foreground">Upload 2-3 thumbnails. AI scores and picks the winner.</p>
+          <p className="mt-1 text-sm text-muted-foreground">Upload 2-3 thumbnails. AI picks the winner.</p>
           <span className="mt-3 inline-block text-xs font-mono uppercase tracking-widest text-brand">
             {thumbnailsCount > 0 ? `${thumbnailsCount} tested →` : "Live now →"}
           </span>
+        </Link>
+        <Link href="/app/tools" className="group relative overflow-hidden rounded-2xl border border-brand/30 bg-brand/5 p-6 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-brand/10">
+          <div className="flex items-center justify-between">
+            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-purple-500 to-violet-500 flex items-center justify-center text-white"><Wrench className="h-5 w-5" /></div>
+            <ArrowRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+          </div>
+          <h3 className="mt-4 font-display font-bold">AI Tools <span className="text-xs text-brand">NEW</span></h3>
+          <p className="mt-1 text-sm text-muted-foreground">Script Scorer, Repurposer, Hashtags, Hooks.</p>
+          <span className="mt-3 inline-block text-xs font-mono uppercase tracking-widest text-brand">4 tools →</span>
         </Link>
       </div>
 

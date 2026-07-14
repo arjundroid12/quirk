@@ -476,3 +476,286 @@ Rewrite with SHORT sentences. Average 14-17 words per sentence. 30%+ of sentence
   return raw.trim();
 }
 
+// =============================================================================
+// Script Scorer — rates a script before filming
+// =============================================================================
+
+export interface ScriptScore {
+  hookStrength: number;
+  pacing: number;
+  ctaStrength: number;
+  retention: number;
+  overall: number;
+  feedback: string;
+  improvements: string[];
+}
+
+export async function scoreScript(args: {
+  content: string;
+  platform: string;
+  niche: string;
+}): Promise<ScriptScore> {
+  const systemPrompt = `You are QUIRK Script Scorer — an expert content strategist who rates scripts before filming. You output STRICT JSON only.`;
+
+  const userPrompt = `Score this ${args.platform} script in the "${args.niche}" niche.
+
+SCRIPT:
+${args.content}
+
+Rate each dimension 0-100 (use precise non-round numbers like 73, 42, 88):
+- hookStrength: Does the first 3 seconds stop the scroll? Is it specific, surprising, or emotionally charged?
+- pacing: Does the script maintain momentum? Are there dead spots? Is the length right for the platform?
+- ctaStrength: Is the call-to-action natural and effective? Does it fit the content?
+- retention: Will viewers watch to the end? Is there a payoff? Are there rewatch triggers?
+- overall: Weighted average (hook 30%, pacing 25%, cta 20%, retention 25%)
+
+Also provide:
+- feedback: 2-3 sentences explaining the overall score
+- improvements: array of 3-5 specific, actionable improvements
+
+Return JSON:
+{
+  "hookStrength": <number>,
+  "pacing": <number>,
+  "ctaStrength": <number>,
+  "retention": <number>,
+  "overall": <number>,
+  "feedback": "<string>",
+  "improvements": ["<string>", "<string>", "<string>"]
+}
+
+Output ONLY the JSON. No markdown fences.`;
+
+  const raw = await callZAI([
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ], 2000);
+
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  let parsed: any;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) parsed = JSON.parse(match[0]);
+    else throw new Error("Z.AI returned non-JSON score");
+  }
+
+  return {
+    hookStrength: clamp(Number(parsed.hookStrength ?? 0), 0, 100),
+    pacing: clamp(Number(parsed.pacing ?? 0), 0, 100),
+    ctaStrength: clamp(Number(parsed.ctaStrength ?? 0), 0, 100),
+    retention: clamp(Number(parsed.retention ?? 0), 0, 100),
+    overall: clamp(Number(parsed.overall ?? 0), 0, 100),
+    feedback: String(parsed.feedback ?? "").slice(0, 1000),
+    improvements: Array.isArray(parsed.improvements) ? parsed.improvements.map((s: any) => String(s).slice(0, 300)) : [],
+  };
+}
+
+// =============================================================================
+// Content Repurposer — converts long-form into short-form clips
+// =============================================================================
+
+export interface RepurposedClip {
+  title: string;
+  hook: string;
+  body: string;
+  cta: string;
+  timestamp: string;
+}
+
+export async function repurposeContent(args: {
+  content: string;
+  niche: string;
+  targetPlatform: string;
+  clipCount: number;
+}): Promise<RepurposedClip[]> {
+  const systemPrompt = `You are QUIRK Repurposer — you take long-form content and extract multiple short-form clips. You output STRICT JSON only.`;
+
+  const userPrompt = `Take this long-form content and extract ${args.clipCount} short-form clips optimized for ${args.targetPlatform}.
+
+Niche: ${args.niche}
+
+LONG-FORM CONTENT:
+${args.content}
+
+For each clip, identify:
+- title: 6-12 word scroll-stopping title
+- hook: The opening 1-2 seconds (max 20 words, first-person voice)
+- body: The short-form script body (2-4 sentences, adapted for ${args.targetPlatform})
+- cta: A natural call-to-action for this specific clip
+- timestamp: Approximate where in the long-form this clip comes from (e.g. "0:30-1:15" or "Intro section")
+
+Each clip should cover a DIFFERENT point or angle from the long-form.
+
+Return JSON array of EXACTLY ${args.clipCount} objects:
+[
+  {
+    "title": "<string>",
+    "hook": "<string>",
+    "body": "<string>",
+    "cta": "<string>",
+    "timestamp": "<string>"
+  }
+]
+
+Output ONLY the JSON array. No markdown fences.`;
+
+  const raw = await callZAI([
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ], 4000);
+
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  let parsed: any[];
+  try {
+    parsed = JSON.parse(cleaned);
+    if (!Array.isArray(parsed)) throw new Error("not array");
+  } catch {
+    const match = cleaned.match(/\[[\s\S]*\]/);
+    if (match) parsed = JSON.parse(match[0]);
+    else throw new Error("Z.AI returned non-JSON clips");
+  }
+
+  return parsed.slice(0, args.clipCount).map((p: any) => ({
+    title: String(p.title ?? "").slice(0, 200),
+    hook: String(p.hook ?? "").slice(0, 300),
+    body: String(p.body ?? "").slice(0, 1000),
+    cta: String(p.cta ?? "").slice(0, 300),
+    timestamp: String(p.timestamp ?? "").slice(0, 50),
+  }));
+}
+
+// =============================================================================
+// Hashtag Generator — researches hashtags for a topic
+// =============================================================================
+
+export interface HashtagSet {
+  primary: string[];
+  secondary: string[];
+  trending: string[];
+  strategy: string;
+}
+
+export async function generateHashtags(args: {
+  topic: string;
+  niche: string;
+  platform: string;
+}): Promise<HashtagSet> {
+  const systemPrompt = `You are QUIRK Hashtag Generator — an expert at social media hashtag strategy. You output STRICT JSON only.`;
+
+  const userPrompt = `Generate hashtags for a ${args.platform} post about "${args.topic}" in the "${args.niche}" niche.
+
+Provide 3 tiers:
+- primary: 5-8 highly relevant hashtags directly about the topic (mix of popular and niche)
+- secondary: 5-8 broader niche hashtags that the target audience follows
+- trending: 5-8 currently trending hashtags that fit naturally (mix general trends + niche trends)
+- strategy: 2-3 sentences explaining the hashtag strategy for this post
+
+All hashtags WITHOUT the # symbol, lowercase, no spaces.
+
+Return JSON:
+{
+  "primary": ["<string>", ...],
+  "secondary": ["<string>", ...],
+  "trending": ["<string>", ...],
+  "strategy": "<string>"
+}
+
+Output ONLY the JSON. No markdown fences.`;
+
+  const raw = await callZAI([
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ], 2000);
+
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  let parsed: any;
+  try {
+    parsed = JSON.parse(cleaned);
+  } catch {
+    const match = cleaned.match(/\{[\s\S]*\}/);
+    if (match) parsed = JSON.parse(match[0]);
+    else throw new Error("Z.AI returned non-JSON hashtags");
+  }
+
+  return {
+    primary: Array.isArray(parsed.primary) ? parsed.primary.map((s: any) => String(s).toLowerCase().replace(/\s+/g, "")) : [],
+    secondary: Array.isArray(parsed.secondary) ? parsed.secondary.map((s: any) => String(s).toLowerCase().replace(/\s+/g, "")) : [],
+    trending: Array.isArray(parsed.trending) ? parsed.trending.map((s: any) => String(s).toLowerCase().replace(/\s+/g, "")) : [],
+    strategy: String(parsed.strategy ?? "").slice(0, 1000),
+  };
+}
+
+// =============================================================================
+// Hook Generator — generates multiple hook variations
+// =============================================================================
+
+export interface HookVariation {
+  hook: string;
+  type: string;
+  psychology: string;
+}
+
+export async function generateHooks(args: {
+  topic: string;
+  niche: string;
+  platform: string;
+  count: number;
+}): Promise<HookVariation[]> {
+  const systemPrompt = `You are QUIRK Hook Generator — you write scroll-stopping hooks for short-form video. You output STRICT JSON only.`;
+
+  const userPrompt = `Generate ${args.count} different hook variations for a ${args.platform} video about "${args.topic}" in the "${args.niche}" niche.
+
+Each hook must use a DIFFERENT psychological trigger:
+- Curiosity gap ("Here's what nobody tells you about...")
+- Bold claim ("Most people do X wrong. Here's the right way.")
+- Story setup ("I tried X for 30 days. Here's what happened.")
+- Stat shock ("90% of people don't know this about...")
+- Contrarian ("Everyone says X. They're wrong.")
+- Question ("What if I told you...")
+- Pattern interrupt ("Stop scrolling. This is different.")
+- List tease ("3 things I wish I knew before...")
+- Personal vulnerability ("I was wrong about X...")
+- Time pressure ("Before you film your next video...")
+
+For each hook:
+- hook: The actual opening line (max 20 words, first-person, conversational)
+- type: The psychological trigger used
+- psychology: 1 sentence explaining why this hook works
+
+Return JSON array of EXACTLY ${args.count} objects:
+[
+  {
+    "hook": "<string>",
+    "type": "<string>",
+    "psychology": "<string>"
+  }
+]
+
+Output ONLY the JSON array. No markdown fences.`;
+
+  const raw = await callZAI([
+    { role: "system", content: systemPrompt },
+    { role: "user", content: userPrompt },
+  ], 3000);
+
+  const cleaned = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/i, "").trim();
+  let parsed: any[];
+  try {
+    parsed = JSON.parse(cleaned);
+    if (!Array.isArray(parsed)) throw new Error("not array");
+  } catch {
+    const match = cleaned.match(/\[[\s\S]*\]/);
+    if (match) parsed = JSON.parse(match[0]);
+    else throw new Error("Z.AI returned non-JSON hooks");
+  }
+
+  return parsed.slice(0, args.count).map((p: any) => ({
+    hook: String(p.hook ?? "").slice(0, 300),
+    type: String(p.type ?? "").slice(0, 50),
+    psychology: String(p.psychology ?? "").slice(0, 300),
+  }));
+}
+
+
