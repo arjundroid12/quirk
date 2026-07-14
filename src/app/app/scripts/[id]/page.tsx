@@ -11,19 +11,46 @@ export default async function ScriptDetailPage({ params }: { params: Promise<{ i
   const user = session?.user as any;
   const { id } = await params;
 
-  console.log("[script page] id:", id, "session user:", user?.id, "email:", user?.email);
+  // Debug: render diagnostics instead of silent 404
+  let script: any = null;
+  let dbError: string | null = null;
 
-  if (!user?.id) {
-    console.log("[script page] no session user, calling notFound()");
-    notFound();
+  try {
+    script = await db.script.findUnique({ where: { id } });
+  } catch (err: any) {
+    dbError = err?.message || String(err);
   }
 
-  const script = await db.script.findUnique({ where: { id } });
-  console.log("[script page] script found:", !!script, "script authorId:", script?.authorId);
+  // If not authenticated, show debug info
+  if (!user?.id) {
+    return (
+      <div className="px-6 py-8 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Debug: No session</h1>
+        <pre className="text-xs bg-muted p-4 rounded overflow-auto">
+          {JSON.stringify({ id, session: session ? "exists" : "null", user: user ? "exists" : "null", dbError }, null, 2)}
+        </pre>
+      </div>
+    );
+  }
 
+  // If script not found or doesn't belong to user, show debug info
   if (!script || script.authorId !== user.id) {
-    console.log("[script page] script not found or authorId mismatch, calling notFound()");
-    notFound();
+    return (
+      <div className="px-6 py-8 max-w-2xl mx-auto">
+        <h1 className="text-2xl font-bold mb-4">Debug: Script not accessible</h1>
+        <pre className="text-xs bg-muted p-4 rounded overflow-auto">
+          {JSON.stringify({
+            id,
+            userId: user.id,
+            userEmail: user.email,
+            scriptFound: !!script,
+            scriptAuthorId: script?.authorId ?? null,
+            authorMatch: script ? script.authorId === user.id : false,
+            dbError,
+          }, null, 2)}
+        </pre>
+      </div>
+    );
   }
 
   return (
