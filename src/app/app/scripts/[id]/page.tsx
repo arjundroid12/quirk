@@ -9,25 +9,16 @@ export const dynamic = "force-dynamic";
 export default async function ScriptDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
 
-  // Build a request-like object for getToken using next/headers
-  // In Next.js 16, cookies() returns ReadonlyRequestCookies
-  const cookieStore = await cookies();
-  const headerStore = await headers();
+  // Next.js 16: cookies() and headers() are async
+  const [cookieStore, headerStore] = await Promise.all([cookies(), headers()]);
 
-  const cookieHeader = cookieStore
-    .getAll()
-    .map((c) => `${c.name}=${c.value}`)
-    .join("; ");
+  // Build the cookie header string that getToken expects
+  const allCookies = cookieStore.getAll();
+  const cookieStr = allCookies.map((c) => `${c.name}=${c.value}`).join("; ");
 
-  const req = {
-    headers: {
-      cookie: cookieHeader,
-      ...Object.fromEntries(headerStore.entries()),
-    },
-  };
-
+  // getToken needs req.headers.cookie (string format)
   const token = await getToken({
-    req: req as any,
+    req: { headers: { cookie: cookieStr } } as any,
     secret: process.env.NEXTAUTH_SECRET,
   });
 
