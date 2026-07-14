@@ -78,12 +78,19 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
   const url = getDbUrl() + "/v2/pipeline";
   const token = getToken();
 
+  // Build body exactly like the working raw test
   const body = {
     requests: statements.map((stmt) => ({
       type: "execute",
       stmt: {
         sql: stmt.sql,
-        args: stmt.args.map(toTursoArg),
+        args: stmt.args.map((arg: any) => {
+          if (arg === null || arg === undefined) return { type: "null" };
+          if (typeof arg === "number") return { type: "float", value: arg };
+          if (typeof arg === "boolean") return { type: "integer", value: arg ? 1 : 0 };
+          if (arg instanceof Date) return { type: "text", value: arg.toISOString() };
+          return { type: "text", value: String(arg) };
+        }),
       },
     })),
   };
@@ -103,6 +110,16 @@ async function executePipeline(statements: Array<{ sql: string; args: any[] }>):
   }
 
   const data = await res.json();
+
+  // Check for Turso-level errors
+  for (const result of data.results || []) {
+    if (result.type === "error") {
+      const errObj = result.error as any;
+      const msg = typeof errObj === 'string' ? errObj : (errObj?.message || JSON.stringify(errObj));
+      throw new Error(`Turso error: ${msg}`);
+    }
+  }
+
   return data;
 }
 
