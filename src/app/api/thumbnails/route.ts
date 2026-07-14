@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
-import { cookies } from "next/headers";
+import { getSession } from "@/lib/session";
 import { analyzeThumbnail } from "@/lib/zai";
 import { z } from "zod";
 
@@ -20,16 +20,9 @@ const AnalyzeSchema = z.object({
 });
 
 async function getAuthUserId(): Promise<string | null> {
-  const cookieStore = await cookies();
-  const cookieStr = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
-  const origin = process.env.NEXTAUTH_URL || "https://quirk-ten.vercel.app";
   try {
-    const res = await fetch(`${origin}/api/auth/session`, {
-      headers: { cookie: cookieStr },
-      cache: "no-store",
-    });
-    const data = await res.json();
-    return data?.user?.id || null;
+    const session = await getSession();
+    return (session?.user as any)?.id || null;
   } catch {
     return null;
   }

@@ -1,5 +1,5 @@
-import { getToken } from "next-auth/jwt";
 import { cookies } from "next/headers";
+import { getSession } from "@/lib/session";
 import { generateScript, humanizeScript, type ScriptGenInput } from "@/lib/zai";
 import { z } from "zod";
 
@@ -19,18 +19,11 @@ const CreateScriptSchema = z.object({
   content: z.string().optional().nullable(),
 });
 
+// Use getSession (getServerSession) — same as /api/auth/session endpoint
 async function getAuthUserId(): Promise<string | null> {
-  // Use the session API to verify auth (more reliable than getToken on Next.js 16)
-  const cookieStore = await cookies();
-  const cookieStr = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join("; ");
-  const origin = process.env.NEXTAUTH_URL || "https://quirk-ten.vercel.app";
   try {
-    const res = await fetch(`${origin}/api/auth/session`, {
-      headers: { cookie: cookieStr },
-      cache: "no-store",
-    });
-    const data = await res.json();
-    return data?.user?.id || null;
+    const session = await getSession();
+    return (session?.user as any)?.id || null;
   } catch {
     return null;
   }
